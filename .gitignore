@@ -1,0 +1,13 @@
+/vendor/
+/config/database.php
+/config/app.php
+/storage/
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+*~
+.idea/
+.vscode/
+*.sublime-*
+*.bak

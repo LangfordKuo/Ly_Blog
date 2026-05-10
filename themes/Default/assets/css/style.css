@@ -1,0 +1,102 @@
+/* LyBlog Default Theme - Soft Minimalism + Glassmorphism */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+    --bg:#f5f5f7;
+    --card-bg:rgba(255,255,255,0.72);
+    --text:#1d1d1f;
+    --text-2:#6e6e73;
+    --border:rgba(0,0,0,0.06);
+    --accent:#1d1d1f;
+    --radius:12px;
+    --shadow:0 4px 16px rgba(0,0,0,0.04);
+    --blur:blur(20px);
+}
+body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.7;
+    min-height:100vh;
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{opacity:0.7}
+.container{max-width:720px;margin:0 auto;padding:0 20px}
+.site-header{background:var(--card-bg);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-bottom:1px solid var(--border);padding:16px 0;position:sticky;top:0;z-index:100}
+.site-header .container{display:flex;align-items:center;justify-content:space-between}
+.site-logo{font-size:18px;font-weight:600;color:var(--text)}
+.site-nav{display:flex;gap:20px}
+.site-nav a{color:var(--text-2);font-size:14px;transition:color 0.15s}
+.site-nav a:hover{color:var(--text)}
+.site-main{padding:32px 0}
+.site-footer{text-align:center;padding:32px 0;color:var(--text-2);font-size:13px}
+.card{background:var(--card-bg);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:20px}
+.card:hover{box-shadow:0 8px 32px rgba(0,0,0,0.06)}
+.card h2{font-size:20px;font-weight:500;margin-bottom:8px}
+.card h2 a{color:var(--text)}
+.card-meta{font-size:13px;color:var(--text-2);margin-bottom:8px}
+.card-excerpt{font-size:14px;color:var(--text-2);line-height:1.6;margin-bottom:12px}
+.read-more{font-size:13px;font-weight:500}
+.card-cover{margin:-24px -24px 16px}
+.card-cover img{width:100%;border-radius:var(--radius) var(--radius) 0 0;max-height:300px;object-fit:cover}
+.page-title{font-size:28px;font-weight:500;margin-bottom:24px}
+.article-full{margin-bottom:40px}
+.article-header{margin-bottom:24px}
+.article-header h1{font-size:32px;font-weight:600;line-height:1.3;margin-bottom:12px}
+.article-meta{font-size:14px;color:var(--text-2)}
+.article-meta a{color:var(--text-2)}
+.article-cover{margin-bottom:24px;border-radius:var(--radius);max-width:100%}
+.article-content{font-size:16px;line-height:1.8;margin-bottom:32px}
+.article-content p{margin-bottom:16px}
+.article-content img{max-width:100%;border-radius:var(--radius)}
+.article-content pre{background:rgba(0,0,0,0.03);padding:16px;border-radius:8px;overflow-x:auto;font-size:14px}
+.article-content blockquote{border-left:3px solid var(--border);padding-left:16px;color:var(--text-2);margin:16px 0}
+.article-content h2,.article-content h3{font-weight:600;margin:24px 0 12px}
+.article-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+.tag{display:inline-block;padding:4px 12px;background:rgba(0,0,0,0.04);border-radius:6px;font-size:13px;color:var(--text-2);transition:all 0.15s}
+.tag:hover{background:rgba(0,0,0,0.08);color:var(--text)}
+.article-actions{display:flex;align-items:center;gap:16px;margin-bottom:32px;padding:16px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.like-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:transparent;font-size:14px;cursor:pointer;transition:all 0.2s;font-family:inherit;color:var(--text)}
+.like-btn:hover{background:rgba(255,59,48,0.06);border-color:rgba(255,59,48,0.2)}
+.like-btn.liked{background:rgba(255,59,48,0.08);border-color:#ff3b30;color:#ff3b30}
+.comments{margin-top:48px}
+.comments h2{font-size:20px;font-weight:500;margin-bottom:24px}
+.comment-list{margin-bottom:32px}
+.comment{display:flex;gap:12px;margin-bottom:16px}
+.comment-avatar{width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0;color:var(--text-2)}
+.comment-body{flex:1}
+.comment-meta{margin-bottom:4px;font-size:13px}
+.comment-meta strong{color:var(--text)}
+.comment-meta span{color:var(--text-2);margin-left:8px}
+.comment-content{font-size:14px;line-height:1.6}
+.no-comments{color:var(--text-2);text-align:center;padding:32px 0}
+.comment-form{margin-top:32px}
+.comment-form h3{font-size:16px;margin-bottom:16px}
+.form-row{margin-bottom:12px}
+.form-row input,.form-row textarea{width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text);background:rgba(255,255,255,0.6);transition:all 0.2s;outline:none}
+.form-row input:focus,.form-row textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,0,0,0.06);background:#fff}
+.form-row textarea{resize:vertical;min-height:100px}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 24px;border:none;border-radius:8px;font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;transition:all 0.2s;text-decoration:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#333;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.15);opacity:1}
+.btn-secondary{background:transparent;color:var(--text-2);border:1px solid var(--border)}
+.btn-secondary:hover{background:rgba(0,0,0,0.03);opacity:1}
+.pagination{text-align:center;padding:24px 0}
+.empty{text-align:center;padding:48px 24px;color:var(--text-2)}
+.sidebar{margin-top:48px}
+.sidebar .card{padding:20px}
+.sidebar h3{font-size:14px;font-weight:500;margin-bottom:12px;color:var(--text-2)}
+.sidebar ul{list-style:none}
+.sidebar li{margin-bottom:8px}
+.sidebar li a{font-size:14px;color:var(--text-2);transition:color 0.15s}
+.sidebar li a:hover{color:var(--text)}
+.tag-cloud{display:flex;flex-wrap:wrap;gap:6px}
+.archive-list{list-style:none}
+.archive-list li{margin-bottom:12px;display:flex;justify-content:space-between;align-items:baseline}
+.archive-list a{font-size:16px;font-weight:500}
+.archive-list .count{font-size:13px;color:var(--text-2);margin-left:8px}
+@media(max-width:600px){
+    .container{padding:0 16px}
+    .article-header h1{font-size:24px}
+    .card{padding:20px}
+    .site-nav{gap:12px}
+}

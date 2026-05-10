@@ -1,0 +1,9 @@
+{
+    "name": "lyblog/lyblog",
+    "description": "A lightweight, plugin-based blog system in PHP",
+    "type": "project",
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {}
+}

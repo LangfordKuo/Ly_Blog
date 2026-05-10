@@ -1,0 +1,9 @@
+{
+    "name": "Sitemap Generator",
+    "slug": "sitemap",
+    "version": "1.0.0",
+    "author": "LyBlog",
+    "description": "自动生成 sitemap.xml，提升搜索引擎收录",
+    "main": "SitemapPlugin.php",
+    "class": "LyBlog\\Plugins\\Sitemap\\SitemapPlugin"
+}
