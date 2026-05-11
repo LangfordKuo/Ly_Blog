@@ -56,6 +56,7 @@ $router->group('/' . $adminPrefix, function (Router $router) {
     $router->get('/articles/{id}/edit', 'Admin\ArticleController@edit');
     $router->post('/articles/{id}/update', 'Admin\ArticleController@update');
     $router->get('/articles/{id}/delete', 'Admin\ArticleController@delete');
+    $router->get('/articles/{id}/export', 'Admin\ArticleController@export');
     $router->post('/articles/batch', 'Admin\ArticleController@batch');
 
     // Pages
@@ -175,6 +176,14 @@ $router->get('/tag/{slug}', 'Front\TagController@show');
 $router->get('/category/{slug}', 'Front\CategoryController@show');
 $router->post('/like/{articleId}', 'Front\LikeController@toggle');
 $router->get('/rss', 'Front\RssController@index');
+
+// ─── API Routes ─────────────────────────────────
+$router->get('/api/articles', 'Front\ApiController@articles');
+$router->get('/api/article/{slug}', 'Front\ApiController@article');
+$router->get('/api/search', 'Front\ApiController@search');
+$router->get('/api/categories', 'Front\ApiController@categories');
+$router->get('/api/tags', 'Front\ApiController@tags');
+$router->get('/api/archives', 'Front\ApiController@archives');
 
 // ─── User Panel Routes ─────────────────────────
 $router->group('/user', function (Router $router) {

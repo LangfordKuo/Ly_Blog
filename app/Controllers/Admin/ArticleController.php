@@ -73,7 +73,7 @@ class ArticleController extends BaseAdminController
                 $this->statusBadge($a['status']),
                 $a['views'],
                 $a['published_at'] ?? '-',
-                $this->actionButtons($this->adminUrl('articles/' . $a['id'] . '/edit'), $this->adminUrl('articles/' . $a['id'] . '/delete')),
+                $this->actionButtons($this->adminUrl('articles/' . $a['id'] . '/edit'), $this->adminUrl('articles/' . $a['id'] . '/delete')) . ' <a href="' . $this->adminUrl('articles/' . $a['id'] . '/export') . '" style="font-size:13px;padding:4px 10px;border-radius:4px;color:var(--text-2);border:1px solid var(--border)">导出</a>',
             ];
         }
         $this->table($headers, $rows, '暂无文章');
@@ -187,6 +187,31 @@ class ArticleController extends BaseAdminController
 
         Session::flash('success', "已处理 {$count} 篇文章");
         $this->redirect($this->adminUrl('articles'));
+    }
+
+    public function export(Request $request, $id)
+    {
+        $article = Article::find((int) $id);
+        if (!$article) { $this->notFound(); return; }
+
+        $tags = Article::getTags($article['id']);
+        $tagNames = implode(', ', array_column($tags, 'name'));
+
+        $md = "---\n";
+        $md .= "title: " . $article['title'] . "\n";
+        $md .= "date: " . ($article['published_at'] ?? $article['created_at']) . "\n";
+        $md .= "slug: " . $article['slug'] . "\n";
+        $md .= "status: " . $article['status'] . "\n";
+        $md .= "tags: " . $tagNames . "\n";
+        if ($article['cover_image']) $md .= "cover: " . $article['cover_image'] . "\n";
+        $md .= "---\n\n";
+        $md .= $article['content'] ?? '';
+
+        $filename = $article['slug'] . '.md';
+        header('Content-Type: text/markdown; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        echo $md;
+        exit;
     }
 
     private function renderForm(array $article = null): void
