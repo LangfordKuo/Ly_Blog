@@ -43,6 +43,24 @@ class ArticleController extends BaseController
         $liked = Like::isLiked($article['id'], $request->getIp());
         $commentCount = Comment::getArticleCommentCount($article['id']);
 
+        // Reading time estimate (avg 300 chars/min for Chinese)
+        $plainContent = strip_tags($article['content'] ?? '');
+        $article['read_time'] = max(1, (int)ceil(mb_strlen($plainContent) / 300));
+
+        // Author info
+        $author = \LyBlog\Models\User::find($article['author_id']);
+
+        // Related articles (same category or tags)
+        $related = [];
+        if ($category) {
+            $relatedData = Article::query(
+                "id != ? AND category_id = ? AND status = 'published' AND published_at <= NOW()",
+                [$article['id'], $category['id']],
+                'RAND()'
+            );
+            $related = array_slice($relatedData, 0, 3);
+        }
+
         // Pre-render comments HTML
         $commentsHtml = $this->renderCommentsHtml($comments);
 
@@ -54,6 +72,8 @@ class ArticleController extends BaseController
             'tags'          => $tags,
             'category'      => $category,
             'liked'         => $liked,
+            'author'        => $author,
+            'related'       => $related,
             'csrf_field'    => Session::csrfField(),
             'csrf_token'    => Session::csrfToken(),
         ]);

@@ -1,0 +1,9 @@
+{% extends "layout.twig" %}{% block title %}搜索 - {{ site_name }}{% endblock %}{% block content %}
+<section class="search-hero"><form method="get" action="{{ site_url }}/search" class="search-box"><input type="text" name="q" value="{{ query|escape }}" placeholder="搜索文章..." autofocus><button type="submit">🔍 搜索</button></form></section>
+<div class="container"><div class="content-area full-width">
+{% if query is empty %}<div class="empty" style="text-align:center;padding:60px 0"><div style="font-size:64px">🔍</div><p style="color:var(--text2);margin-top:16px">输入关键词开始搜索</p></div>
+{% elseif items|length == 0 %}<h1 class="page-title">搜索: "{{ query|escape }}" (0 条结果)</h1><div class="empty" style="text-align:center;padding:60px 0"><p style="color:var(--text2)">未找到相关文章</p></div>
+{% else %}<h1 class="page-title" style="font-size:24px;margin-bottom:24px">搜索: "{{ query|escape }}" (共 {{ total }} 条)</h1>
+{% for a in items %}<article class="article-card"><div class="card-body"><h2><a href="{{ site_url }}/article/{{ a.slug|escape }}">{{ a.title|escape }}</a></h2><div class="card-meta"><span>{{ a.published_at|date('Y-m-d') }}</span></div>{% if a.excerpt %}<p class="card-excerpt">{{ a.excerpt|escape }}</p>{% endif %}</div></article>{% endfor %}
+{% if has_more %}<div class="pagination"><a href="?q={{ query|escape }}&page={{ next_page }}">下一页 →</a></div>{% endif %}{% endif %}
+</div></div>{% endblock %}

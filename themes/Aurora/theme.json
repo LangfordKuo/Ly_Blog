@@ -1,0 +1,90 @@
+{
+    "name": "Aurora",
+    "version": "1.0.0",
+    "author": "LyBlog",
+    "description": "极光主题 — 高级玻璃拟态风格，功能丰富，支持阅读进度条、目录导航、代码高亮、滚动动画、社交分享、相关推荐等",
+    "config": {
+        "primary_color": {
+            "type": "color",
+            "label": "主题色",
+            "default": "#6366f1",
+            "help": "靛蓝 (indigo-500)"
+        },
+        "primary_color_2": {
+            "type": "color",
+            "label": "次要色",
+            "default": "#a855f7",
+            "help": "紫罗兰 (purple-500)"
+        },
+        "layout": {
+            "type": "select",
+            "label": "页面布局",
+            "default": "dual-sidebar",
+            "options": {
+                "dual-sidebar": "双栏（TOC侧栏）",
+                "sidebar-right": "右栏",
+                "full-width": "全宽"
+            }
+        },
+        "dark_mode": {
+            "type": "select",
+            "label": "颜色模式",
+            "default": "light",
+            "options": {
+                "light": "明亮",
+                "dark": "暗黑",
+                "auto": "跟随系统"
+            }
+        },
+        "hero_style": {
+            "type": "select",
+            "label": "首页顶部",
+            "default": "gradient",
+            "options": {
+                "gradient": "渐变色块",
+                "minimal": "简洁列表",
+                "featured": "精选轮播"
+            }
+        },
+        "reading_progress": {
+            "type": "toggle",
+            "label": "阅读进度条",
+            "default": "1"
+        },
+        "toc_enabled": {
+            "type": "toggle",
+            "label": "文章目录导航",
+            "default": "1"
+        },
+        "ajax_pagination": {
+            "type": "toggle",
+            "label": "无限滚动加载",
+            "default": "1"
+        },
+        "ajax_comment": {
+            "type": "toggle",
+            "label": "AJAX 评论提交",
+            "default": "1"
+        },
+        "show_cover": {
+            "type": "toggle",
+            "label": "显示文章封面",
+            "default": "1"
+        },
+        "show_share": {
+            "type": "toggle",
+            "label": "社交分享按钮",
+            "default": "1"
+        },
+        "show_related": {
+            "type": "toggle",
+            "label": "相关文章推荐",
+            "default": "1"
+        },
+        "custom_css": {
+            "type": "textarea",
+            "label": "自定义 CSS",
+            "default": ""
+        }
+    }
+}

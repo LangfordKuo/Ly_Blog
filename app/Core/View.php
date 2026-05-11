@@ -270,30 +270,37 @@ class View
             return $expr;
         }
 
-        // Simple variable
+        // Dot notation: replace obj.prop → $obj['prop'] anywhere in expression
         if (preg_match('/^(\w+)$/', $expr)) {
             return '$' . $expr;
         }
 
-        // Dot notation: obj.prop → $obj['prop'] (one level)
-        // Or nested: a.b.c → $a['b']['c']
-        if (preg_match('/^(\w+)\.(.+)$/', $expr, $m)) {
-            $segments = explode('.', $expr);
-            $result = '$' . array_shift($segments);
-            foreach ($segments as $seg) {
-                if (preg_match('/^\w+$/', $seg)) {
-                    $result .= "['{$seg}']";
-                } else {
-                    $result .= "[{$seg}]";
+        $dotted = preg_replace_callback('/\b(\w+)\.(\w+)\b/', function ($m) {
+            return '$' . $m[1] . "['{$m[2]}']";
+        }, $expr);
+
+        if ($dotted !== $expr) {
+            // If dot notation was applied, also convert remaining standalone words
+            $dotted = preg_replace_callback('/(?<!\$)(?<![\x27])\b([a-zA-Z_]\w*)\b/', function ($m) {
+                $word = $m[1];
+                $skip = ['if', 'else', 'elseif', 'for', 'foreach', 'while', 'do', 'switch', 'case', 'break', 'continue',
+                         'return', 'echo', 'print', 'isset', 'empty', 'true', 'false', 'null', 'and', 'or', 'not', 'xor',
+                         'new', 'clone', 'throw', 'try', 'catch', 'finally', 'function', 'class',
+                         'count', 'strlen', 'strpos', 'substr', 'trim', 'explode', 'implode', 'date', 'time',
+                         'is_array', 'is_string', 'is_numeric', 'is_int', 'mb_strlen',
+                         'htmlspecialchars', 'strip_tags', 'json_encode', 'json_decode',
+                         'array', 'int', 'string', 'bool', 'float', 'double'];
+                if (in_array(strtolower($word), $skip, true)) {
+                    return $word;
                 }
-            }
-            return $result;
+                return '$' . $word;
+            }, $dotted);
+            return $dotted;
         }
 
         // Regular variable replacement (skip words already after $)
         $expr = preg_replace_callback('/(?<!\$)\b([a-zA-Z_]\w*)\b/', function ($m) {
             $word = $m[1];
-            // Skip PHP keywords and functions
             $skip = ['if', 'else', 'elseif', 'for', 'foreach', 'while', 'do', 'switch', 'case', 'break', 'continue',
                      'return', 'echo', 'print', 'isset', 'empty', 'true', 'false', 'null', 'and', 'or', 'not', 'xor',
                      'new', 'clone', 'throw', 'try', 'catch', 'finally', 'function', 'class',

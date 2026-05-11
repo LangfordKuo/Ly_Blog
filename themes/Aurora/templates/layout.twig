@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN"{% if t_dark_mode == "auto" %} data-auto-dark{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_name }}{% endblock %}</title>
+    {% block meta %}<meta name="description" content="{{ site_description }}">{% endblock %}
+    {% if t_dark_mode == "auto" %}<style>@media(prefers-color-scheme:dark){:root{--bg:#0f0f1a;--card-bg:rgba(30,30,50,0.7);--card-hover:rgba(40,40,65,0.85);--text:#e4e4ed;--text2:#a0a0b8;--text3:#707090;--border:rgba(255,255,255,0.06);--border2:rgba(99,102,241,0.12);--shadow:0 8px 32px rgba(0,0,0,0.2);--shadow-hover:0 16px 48px rgba(0,0,0,0.3);}}</style>{% endif %}
+    <link rel="stylesheet" href="{{ site_url }}/themes/Aurora/assets/css/style.css">
+    {% if theme_css_vars %}<style>{{ theme_css_vars|raw }}</style>{% endif %}
+    {% if theme.custom_css %}<style>{{ theme.custom_css|raw }}</style>{% endif %}
+</head>
+<body class="{{ theme_body_class }}">
+{% if t_reading_progress == '1' %}<div class="reading-progress" id="reading-progress"></div>{% endif %}
+{% if t_reading_progress == '1' %}<div class="back-to-top" id="back-to-top">↑</div>{% endif %}
+
+<header class="site-header header-glass">
+    <div class="site-header-inner">
+        <a href="{{ site_url }}" class="site-logo">{{ site_name }}</a>
+        <nav class="site-nav">
+            <a href="{{ site_url }}" class="active">首页</a>
+            <a href="{{ site_url }}/archive">归档</a>
+            <a href="{{ site_url }}/search">搜索</a>
+            {% if is_logged_in %}<a href="{{ site_url }}/user">控制台</a>{% else %}<a href="{{ site_url }}/login">登录</a>{% endif %}
+        </nav>
+    </div>
+</header>
+
+<main class="site-main">{% block content %}{% endblock %}</main>
+
+<footer class="site-footer">
+    <div class="footer-grid">
+        <div class="footer-col"><h4>{{ site_name }}</h4><p>{{ site_description }}</p></div>
+        <div class="footer-col"><h4>导航</h4><a href="{{ site_url }}">首页</a><a href="{{ site_url }}/archive">归档</a><a href="{{ site_url }}/search">搜索</a></div>
+        <div class="footer-col"><h4>链接</h4><a href="{{ site_url }}/rss">RSS 订阅</a><a href="{{ site_url }}/sitemap.xml">站点地图</a></div>
+    </div>
+    <div class="footer-bottom"><p>&copy; {{ now_year }} {{ site_name }}. Powered by LyBlog. {% if footer_text %}{{ footer_text }}{% endif %}</p></div>
+</footer>
+
+<script src="{{ site_url }}/themes/Aurora/assets/js/aurora.js"></script>
+{% block scripts %}{% endblock %}
+</body></html>

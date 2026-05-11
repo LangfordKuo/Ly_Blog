@@ -1,0 +1,8 @@
+{% extends "layout.twig" %}{% block title %}归档 - {{ site_name }}{% endblock %}{% block content %}
+<div class="container"><div class="content-area full-width">
+{% if year %}<p style="margin-bottom:20px"><a href="{{ site_url }}/archive">← 返回归档</a></p><h1 class="page-title">{{ year }} 年{% if month %}{{ month }} 月{% endif %} 归档</h1>
+{% if items|length == 0 %}<div class="empty"><p>该月份没有文章</p></div>{% else %}{% for a in items %}<article class="article-card"><div class="card-body"><h2><a href="{{ site_url }}/article/{{ a.slug|escape }}">{{ a.title|escape }}</a></h2><div class="card-meta"><span>{{ a.published_at|date('Y-m-d') }}</span></div>{% if a.excerpt %}<p class="card-excerpt">{{ a.excerpt|escape }}</p>{% endif %}</div></article>{% endfor %}{% endif %}
+{% else %}<h1 class="page-title">文章归档</h1>
+{% if archives|length == 0 %}<div class="empty"><p>暂无文章</p></div>
+{% else %}<div class="timeline">{% for y in archives %}<div class="timeline-year"><h3>{{ y.year }}</h3>{% for m in y.months %}<a href="{{ site_url }}/archive/{{ y.year }}/{{ m.month }}" class="timeline-item"><span>{{ y.year }}年{{ m.month }}月</span><span class="date">{{ m.count }} 篇</span></a>{% endfor %}</div>{% endfor %}</div>{% endif %}{% endif %}
+</div></div>{% endblock %}

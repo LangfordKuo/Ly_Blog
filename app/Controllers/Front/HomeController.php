@@ -7,6 +7,7 @@ use LyBlog\Core\Request;
 use LyBlog\Models\Article;
 use LyBlog\Models\Category;
 use LyBlog\Models\Tag;
+use LyBlog\Models\Comment;
 
 class HomeController extends BaseController
 {
@@ -18,11 +19,14 @@ class HomeController extends BaseController
         $tags = Tag::getCloud(20);
 
         $this->display('home', [
-            'items'      => $data['items'],
-            'has_more'   => $data['has_more'],
-            'next_page'  => $data['current_page'] + 1,
-            'categories' => $categories,
-            'tags'       => $tags,
+            'items'          => $data['items'],
+            'has_more'       => $data['has_more'],
+            'next_page'      => $data['current_page'] + 1,
+            'categories'     => $categories,
+            'tags'           => $tags,
+            'article_count'  => Article::count("status = 'published'"),
+            'comment_count'  => Comment::count("status = 'approved'"),
+            'tag_count'      => Tag::count(),
         ]);
     }
 }

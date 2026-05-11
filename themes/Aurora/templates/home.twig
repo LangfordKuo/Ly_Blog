@@ -1,0 +1,53 @@
+{% extends "layout.twig" %}{% block title %}{{ site_name }}{% endblock %}{% block content %}
+<section class="hero{% if t_hero_style == 'gradient' %} hero-gradient{% endif %}">
+    <div class="hero-content">
+        <h1>{{ site_name }}</h1>
+        <p>{{ site_description }}</p>
+        <div class="hero-stats">
+            <div class="hero-stat"><div class="num">{{ article_count|default(0) }}</div><div class="label">文章</div></div>
+            <div class="hero-stat"><div class="num">{{ comment_count|default(0) }}</div><div class="label">评论</div></div>
+            <div class="hero-stat"><div class="num">{{ tag_count|default(0) }}</div><div class="label">标签</div></div>
+        </div>
+    </div>
+</section>
+<div class="container"><div class="content-area {{ t_layout|default('dual-sidebar') }}">
+<div id="articles-container" style="flex:1">
+{% if items|length == 0 %}
+<div class="empty" style="text-align:center;padding:80px 0"><div style="font-size:64px;margin-bottom:16px">📝</div><h2>还没有文章</h2><p style="color:var(--text2);margin-top:8px">期待第一篇精彩内容</p></div>
+{% else %}
+{% for article in items %}
+<article class="article-card{% if loop.first and t_hero_style == 'featured' %} featured-card{% endif %}">
+    {% if t_show_cover == '1' and article.cover_image %}<div class="card-cover"><img data-src="{{ article.cover_image|escape }}" src="{{ article.cover_image|escape }}" alt=""></div>{% endif %}
+    <div class="card-body">
+        {% if article.category_name %}<span class="card-category">{{ article.category_name|escape }}</span>{% endif %}
+        <h2><a href="{{ site_url }}/article/{{ article.slug|escape }}">{{ article.title|escape }}</a></h2>
+        <div class="card-meta">
+            <span>📅 {{ article.published_at|date('Y-m-d') }}</span><span class="dot"></span>
+            <span>👁 {{ article.views }}</span><span class="dot"></span>
+            <span>❤ {{ article.likes }}</span>
+            {% if article.read_time %}<span class="dot"></span><span class="read-time">⏱ {{ article.read_time }} 分钟</span>{% endif %}
+        </div>
+        {% if article.excerpt %}<p class="card-excerpt">{{ article.excerpt|escape }}</p>{% endif %}
+        <div class="card-footer">
+            <a href="{{ site_url }}/article/{{ article.slug|escape }}" class="read-more">阅读全文 →</a>
+            {% if article.tags|length > 0 %}<div class="tags">{% for t in article.tags %}<span class="tag">{{ t.name|escape }}</span>{% endfor %}</div>{% endif %}
+        </div>
+    </div>
+</article>
+{% endfor %}
+{% if has_more %}
+<div style="text-align:center;padding:20px">
+    <a href="?page={{ next_page }}" class="btn btn-outline btn-lg" id="load-more">加载更多文章</a>
+</div>
+{% endif %}
+{% endif %}
+</div>
+
+{% if t_layout != 'full-width' %}
+<aside class="sidebar">
+    {% if categories|length > 0 %}<div class="sidebar-widget"><h3>分类</h3>{% for cat in categories %}<a href="{{ site_url }}/category/{{ cat.slug|escape }}" style="display:block;padding:8px 0;color:var(--text2);font-size:14px;border-bottom:1px solid var(--border)">{{ cat.name|escape }} <span style="float:right;color:var(--text3);font-size:12px">{{ cat.article_count|default(0) }}</span></a>{% endfor %}</div>{% endif %}
+    {% if tags|length > 0 %}<div class="sidebar-widget"><h3>标签</h3><div style="display:flex;flex-wrap:wrap;gap:6px">{% for tag in tags %}<a href="{{ site_url }}/tag/{{ tag.slug|escape }}" class="tag">{{ tag.name|escape }}</a>{% endfor %}</div></div>{% endif %}
+    <div class="sidebar-widget"><h3>订阅</h3><p style="color:var(--text2);font-size:14px">通过 RSS 订阅最新文章</p><a href="{{ site_url }}/rss" class="btn btn-outline btn-sm" style="margin-top:8px">RSS Feed</a></div>
+</aside>
+{% endif %}
+</div></div>{% endblock %}

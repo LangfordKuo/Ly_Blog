@@ -31,6 +31,17 @@ class BaseController
         $this->view->addGlobal('theme_body_class', Theme::bodyClass());
         $this->view->addGlobal('theme', $themeConfig);
         $this->view->addGlobal('t_dark_mode', $themeConfig['dark_mode'] ?? 'light');
+        $this->view->addGlobal('t_layout', $themeConfig['layout'] ?? 'dual-sidebar');
+        $this->view->addGlobal('t_card_style', $themeConfig['card_style'] ?? 'glass');
+        $this->view->addGlobal('t_show_cover', $themeConfig['show_cover'] ?? '1');
+        $this->view->addGlobal('t_primary_color', $themeConfig['primary_color'] ?? '');
+        $this->view->addGlobal('t_hero_style', $themeConfig['hero_style'] ?? 'gradient');
+        $this->view->addGlobal('t_reading_progress', $themeConfig['reading_progress'] ?? '1');
+        $this->view->addGlobal('t_toc_enabled', $themeConfig['toc_enabled'] ?? '1');
+        $this->view->addGlobal('t_show_share', $themeConfig['show_share'] ?? '1');
+        $this->view->addGlobal('t_show_related', $themeConfig['show_related'] ?? '1');
+        $this->view->addGlobal('t_ajax_pagination', $themeConfig['ajax_pagination'] ?? '1');
+        $this->view->addGlobal('t_ajax_comment', $themeConfig['ajax_comment'] ?? '1');
         $this->view->addGlobal('t_card_style', $themeConfig['card_style'] ?? 'glass');
         $this->view->addGlobal('t_show_cover', $themeConfig['show_cover'] ?? '1');
         $this->view->addGlobal('t_primary_color', $themeConfig['primary_color'] ?? '');
