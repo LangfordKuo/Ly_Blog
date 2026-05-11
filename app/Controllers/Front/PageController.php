@@ -15,6 +15,7 @@ class PageController extends BaseController
         $page = Page::findBySlug($slug);
         if (!$page || $page['status'] !== 'published') { $this->notFound(); return; }
 
-        $this->display('page', ['page' => $page]);
+        $bc = $this->breadcrumb([['首页', $this->siteUrl()], [$page['title'], null]]);
+        $this->display('page', ['page' => $page, 'breadcrumb' => $bc]);
     }
 }

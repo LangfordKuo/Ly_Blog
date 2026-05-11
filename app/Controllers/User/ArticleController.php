@@ -188,6 +188,11 @@ class ArticleController extends BaseUserController
         }
         echo '</select>';
         if (!$canPublish) echo '<p class="help-text" style="font-size:12px;color:var(--text-2)">发布权限需管理员审批</p>';
+        echo '<label style="margin-top:8px;display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">';
+        echo '<input type="hidden" name="is_pinned" value="0">';
+        $checked = ($article['is_pinned'] ?? 0) ? 'checked' : '';
+        echo '<input type="checkbox" name="is_pinned" value="1" ' . $checked . '> 置顶文章';
+        echo '</label>';
         echo '</div></div>';
 
         echo '<div class="form-group"><label>分类</label><select name="category_id"><option value="">未分类</option>';
@@ -204,5 +209,41 @@ class ArticleController extends BaseUserController
 
         echo '<button type="submit" class="btn btn-primary">' . ($isEdit ? '更新' : '发布') . '</button>';
         echo '</form></div>';
+
+        echo '<script src="' . $this->siteUrl('assets/js/markdown-preview.js') . '"></script>';
+        echo '<script>var LYBLOG_UPLOAD_URL="' . $this->siteUrl('user/media/quick-upload') . '";var LYBLOG_CSRF="' . Session::csrfToken() . '";</script>';
+        echo '<script src="' . $this->siteUrl('assets/js/image-upload.js') . '"></script>';
+
+        $draftKey = 'lyblog_draft_user_' . ($article['id'] ?? 'new');
+        echo '<div id="draft-banner" style="display:none;background:rgba(255,149,0,0.08);color:#ff9500;padding:10px 16px;border-radius:8px;margin-top:12px;font-size:13px">
+            📝 检测到未保存的草稿 · <a href="#" onclick="restoreDraft();return false">恢复</a> · <a href="#" onclick="clearDraft();return false" style="color:#ff3b30">丢弃</a>
+        </div>';
+        echo '<script>
+            (function(){
+                var form = document.querySelector(".card form"); if (!form) return;
+                var key = "' . $draftKey . '";
+                var banner = document.getElementById("draft-banner");
+                var lastSaved = "";
+                var saved = localStorage.getItem(key);
+                if (saved && banner) {
+                    try { var data = JSON.parse(saved); if (data.content && data.content.trim()) { banner.style.display = "block"; window._draftData = data; } } catch(e) {}
+                }
+                function save() {
+                    var data = {title:(form.querySelector("[name=title]")||{}).value||"", slug:(form.querySelector("[name=slug]")||{}).value||"", content:(form.querySelector("[name=content]")||{}).value||"", excerpt:(form.querySelector("[name=excerpt]")||{}).value||"", tags:(form.querySelector("[name=tags]")||{}).value||"", cover_image:(form.querySelector("[name=cover_image]")||{}).value||"", category_id:(form.querySelector("[name=category_id]")||{}).value||"", saved_at:new Date().toLocaleString()};
+                    var cur = JSON.stringify(data);
+                    if (cur !== lastSaved) { localStorage.setItem(key, cur); lastSaved = cur; }
+                }
+                setInterval(save, 20000); save();
+                form.addEventListener("submit", function() { localStorage.removeItem(key); });
+                window.restoreDraft = function() {
+                    if (!window._draftData) return;
+                    var d = window._draftData;
+                    var s = function(n,v) { var e = form.querySelector("[name="+n+"]"); if (e && v) e.value = v; };
+                    s("title",d.title); s("slug",d.slug); s("content",d.content); s("excerpt",d.excerpt); s("tags",d.tags); s("cover_image",d.cover_image); s("category_id",d.category_id);
+                    if (banner) banner.style.display = "none";
+                };
+                window.clearDraft = function() { localStorage.removeItem(key); if (banner) banner.style.display = "none"; };
+            })();
+        </script>';
     }
 }

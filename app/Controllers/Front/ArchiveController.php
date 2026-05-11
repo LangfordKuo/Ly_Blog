@@ -13,14 +13,20 @@ class ArchiveController extends BaseController
         if ($year) {
             $page = (int) ($request->getQuery('page', 1));
             $data = Article::getByArchive($year, $month, $page, 10);
+            $bc = $this->breadcrumb([
+                ['首页', $this->siteUrl()],
+                ['归档', $this->siteUrl('archive')],
+                [$year . '年' . ($month ? $month . '月' : ''), null],
+            ]);
 
             $this->display('archive', [
-                'year'      => $year,
-                'month'     => $month,
-                'items'     => $data['items'],
-                'has_more'  => $data['has_more'],
-                'next_page' => $data['current_page'] + 1,
-                'archives'  => [],
+                'year'       => $year,
+                'month'      => $month,
+                'items'      => $data['items'],
+                'has_more'   => $data['has_more'],
+                'next_page'  => $data['current_page'] + 1,
+                'archives'   => [],
+                'breadcrumb' => $bc,
             ]);
         } else {
             $rawArchives = Article::getArchives();
@@ -30,13 +36,15 @@ class ArchiveController extends BaseController
                 $grouped[$a['year']]['months'][] = $a;
             }
             $archives = array_values(array_reverse($grouped));
+            $bc = $this->breadcrumb([['首页', $this->siteUrl()], ['归档', null]]);
 
             $this->display('archive', [
                 'year'     => null,
                 'month'    => null,
                 'items'    => [],
-                'has_more' => false,
-                'archives' => $archives,
+                'has_more'   => false,
+                'archives'   => $archives,
+                'breadcrumb' => $bc,
             ]);
         }
     }

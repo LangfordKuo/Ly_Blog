@@ -20,7 +20,7 @@
     {% if t_show_cover == '1' and article.cover_image %}<div class="card-cover"><img data-src="{{ article.cover_image|escape }}" src="{{ article.cover_image|escape }}" alt=""></div>{% endif %}
     <div class="card-body">
         {% if article.category_name %}<span class="card-category">{{ article.category_name|escape }}</span>{% endif %}
-        <h2><a href="{{ site_url }}/article/{{ article.slug|escape }}">{{ article.title|escape }}</a></h2>
+        <h2><a href="{{ site_url }}/article/{{ article.slug|escape }}">{% if article.is_pinned %}📌 {% endif %}{{ article.title|escape }}</a></h2>
         <div class="card-meta">
             <span>📅 {{ article.published_at|date('Y-m-d') }}</span><span class="dot"></span>
             <span>👁 {{ article.views }}</span><span class="dot"></span>
@@ -48,6 +48,7 @@
     {% if categories|length > 0 %}<div class="sidebar-widget"><h3>分类</h3>{% for cat in categories %}<a href="{{ site_url }}/category/{{ cat.slug|escape }}" style="display:block;padding:8px 0;color:var(--text2);font-size:14px;border-bottom:1px solid var(--border)">{{ cat.name|escape }} <span style="float:right;color:var(--text3);font-size:12px">{{ cat.article_count|default(0) }}</span></a>{% endfor %}</div>{% endif %}
     {% if tags|length > 0 %}<div class="sidebar-widget"><h3>标签</h3><div style="display:flex;flex-wrap:wrap;gap:6px">{% for tag in tags %}<a href="{{ site_url }}/tag/{{ tag.slug|escape }}" class="tag">{{ tag.name|escape }}</a>{% endfor %}</div></div>{% endif %}
     <div class="sidebar-widget"><h3>订阅</h3><p style="color:var(--text2);font-size:14px">通过 RSS 订阅最新文章</p><a href="{{ site_url }}/rss" class="btn btn-outline btn-sm" style="margin-top:8px">RSS Feed</a></div>
+    {% if popular|length > 0 %}<div class="sidebar-widget"><h3>热门文章</h3>{% for p in popular %}<a href="{{ site_url }}/article/{{ p.slug|escape }}" style="display:block;padding:8px 0;color:var(--text2);font-size:14px;border-bottom:1px solid var(--border)">{{ p.title|escape }} <span style="float:right;color:var(--text3);font-size:12px">🔥 {{ p.views }}</span></a>{% endfor %}</div>{% endif %}
 </aside>
 {% endif %}
 </div></div>{% endblock %}

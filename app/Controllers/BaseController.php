@@ -52,9 +52,91 @@ class BaseController
         return $this->view->render($template, $data);
     }
 
+    /**
+     * Generate Article schema JSON-LD for rich results.
+     */
+    protected function jsonLdArticle(array $article, ?array $author, ?array $category): string
+    {
+        $data = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Article',
+            'headline' => $article['title'],
+            'description' => \LyBlog\Helpers\Str::excerpt(strip_tags($article['content'] ?? ''), 160),
+            'datePublished' => $article['published_at'],
+            'dateModified' => $article['updated_at'] ?? $article['published_at'],
+            'url' => $this->siteUrl('article/' . $article['slug']),
+            'wordCount' => mb_strlen(strip_tags($article['content'] ?? '')),
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => Config::get('site_name', 'LyBlog'),
+            ],
+        ];
+
+        if ($author) {
+            $data['author'] = [
+                '@type' => 'Person',
+                'name' => $author['display_name'] ?? $author['username'],
+                'url' => $author['website'] ?? null,
+            ];
+        }
+
+        if ($category) {
+            $data['articleSection'] = $category['name'];
+        }
+
+        if ($article['cover_image']) {
+            $data['image'] = $article['cover_image'];
+        }
+
+        return '<script type="application/ld+json">' . json_encode($data, JSON_UNESCAPED_UNICODE) . '</script>';
+    }
+
     protected function display(string $template, array $data = []): void
     {
         $this->view->display($template, $data);
+    }
+
+    /**
+     * Generate breadcrumb HTML + JSON-LD structured data.
+     * @param array $items [[label, url], ...]
+     */
+    protected function breadcrumb(array $items): array
+    {
+        $html = '<nav class="breadcrumb" aria-label="面包屑导航"><ol>';
+        $ld = [];
+        $count = count($items);
+
+        foreach ($items as $i => $item) {
+            $label = $item[0];
+            $url   = $item[1] ?? null;
+            $isLast = ($i === $count - 1);
+
+            $ld[] = [
+                '@type' => 'ListItem',
+                'position' => $i + 1,
+                'name' => strip_tags($label),
+                'item' => $url ?: $this->siteUrl(),
+            ];
+
+            $html .= '<li>';
+            if ($url && !$isLast) {
+                $html .= '<a href="' . htmlspecialchars($url) . '">' . $label . '</a>';
+            } else {
+                $html .= '<span>' . $label . '</span>';
+            }
+            if (!$isLast) $html .= '<span class="sep">/</span>';
+            $html .= '</li>';
+        }
+
+        $html .= '</ol></nav>';
+
+        $jsonLd = '<script type="application/ld+json">' . json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => $ld,
+        ], JSON_UNESCAPED_UNICODE) . '</script>';
+
+        return ['html' => $html, 'ld' => $jsonLd];
     }
 
     protected function redirect(string $url, int $code = 302): void

@@ -12,7 +12,7 @@ class Article extends Model
     protected static $fillable = [
         'title', 'slug', 'content', 'excerpt', 'cover_image',
         'status', 'author_id', 'category_id', 'views', 'likes',
-        'password', 'published_at',
+        'password', 'published_at', 'is_pinned',
     ];
 
     public static function createArticle(array $data): ?int
@@ -52,6 +52,10 @@ class Article extends Model
 
     public static function updateArticle($id, array $data): int
     {
+        // Save revision before updating
+        if (!empty($data['title']) || !empty($data['content'])) {
+            static::saveRevision($id, $data);
+        }
         if (!empty($data['title']) && empty($data['slug'])) {
             $data['slug'] = Str::slug($data['title']);
         }
@@ -88,7 +92,7 @@ class Article extends Model
         return static::where('slug', $slug);
     }
 
-    public static function getPublished(int $page = 1, int $perPage = 10, int $categoryId = 0, string $orderBy = 'published_at DESC'): array
+    public static function getPublished(int $page = 1, int $perPage = 10, int $categoryId = 0, string $orderBy = 'is_pinned DESC, published_at DESC'): array
     {
         $where = "status = 'published' AND published_at <= NOW()";
         $params = [];
@@ -199,6 +203,18 @@ class Article extends Model
         $db->query("UPDATE {articles} SET views = views + 1 WHERE id = ?", [$articleId]);
     }
 
+    /**
+     * Get popular articles by views.
+     */
+    public static function getPopular(int $limit = 5): array
+    {
+        return static::query(
+            "status = 'published' AND published_at <= NOW()",
+            [],
+            'views DESC'
+        );
+    }
+
     public static function getTags(int $articleId): array
     {
         $db = Database::getInstance();
@@ -207,6 +223,42 @@ class Article extends Model
         return $db->fetchAll(
             "SELECT t.* FROM {tags} t INNER JOIN {article_tag} at ON t.id = at.tag_id WHERE at.article_id = ? ORDER BY t.name",
             [$articleId]
+        );
+    }
+
+    /**
+     * Get the previous (newer) published article.
+     */
+    public static function getPrev(int $articleId): ?array
+    {
+        $article = static::find($articleId);
+        if (!$article) return null;
+
+        $db = Database::getInstance();
+        if ($db === null) return null;
+
+        $time = $article['published_at'] ?? $article['created_at'];
+        return $db->fetch(
+            "SELECT id, title, slug FROM {articles} WHERE status = 'published' AND published_at <= NOW() AND published_at > ? ORDER BY published_at ASC LIMIT 1",
+            [$time]
+        );
+    }
+
+    /**
+     * Get the next (older) published article.
+     */
+    public static function getNext(int $articleId): ?array
+    {
+        $article = static::find($articleId);
+        if (!$article) return null;
+
+        $db = Database::getInstance();
+        if ($db === null) return null;
+
+        $time = $article['published_at'] ?? $article['created_at'];
+        return $db->fetch(
+            "SELECT id, title, slug FROM {articles} WHERE status = 'published' AND published_at <= NOW() AND published_at < ? ORDER BY published_at DESC LIMIT 1",
+            [$time]
         );
     }
 
@@ -319,6 +371,34 @@ class Article extends Model
         }
 
         return $slug;
+    }
+
+    private static function saveRevision(int $articleId, array $data): void
+    {
+        $db = Database::getInstance();
+        if (!$db) return;
+
+        $current = static::find($articleId);
+        if (!$current) return;
+
+        $db->insert('article_revisions', [
+            'article_id' => $articleId,
+            'title'      => $current['title'],
+            'content'    => $current['content'] ?? '',
+            'excerpt'    => $current['excerpt'] ?? '',
+            'author_id'  => $data['author_id'] ?? $current['author_id'],
+        ]);
+
+        // Keep only last 20 revisions
+        $db->query(
+            "DELETE FROM {article_revisions} WHERE article_id = ? AND id NOT IN (SELECT id FROM (SELECT id FROM {article_revisions} WHERE article_id = ? ORDER BY id DESC LIMIT 20) AS t)",
+            [$articleId, $articleId]
+        );
+    }
+
+    public static function getRevisions(int $articleId): array
+    {
+        return static::query('article_id = ?', [$articleId], 'id DESC');
     }
 
     private static function emptyPaginate(int $perPage): array

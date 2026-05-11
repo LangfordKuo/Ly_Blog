@@ -50,7 +50,7 @@ class BaseAdminController extends BaseController
         $this->menuItem('dashboard', '仪表盘', '📊', $activeMenu);
         $this->menuItem('articles', '文章', '📝', $activeMenu);
         $this->menuItem('pages', '页面', '📄', $activeMenu);
-        $this->menuItem('comments', '评论', '💬', $activeMenu);
+        $this->menuItem('comments', '评论', '💬', $activeMenu, $this->pendingCommentCount());
         $this->menuItem('categories', '分类', '📁', $activeMenu);
         $this->menuItem('tags', '标签', '🏷️', $activeMenu);
         $this->menuDivider('用户');
@@ -93,16 +93,26 @@ class BaseAdminController extends BaseController
         echo '</body></html>';
     }
 
-    private function menuItem(string $slug, string $label, string $icon, string $active): void
+    private function menuItem(string $slug, string $label, string $icon, string $active, int $badge = 0): void
     {
         $url = $this->adminUrl($slug === 'dashboard' ? '' : $slug);
         $cls = $active === $slug ? 'active' : '';
-        echo '<a href="' . $url . '" class="' . $cls . '"><span class="nav-icon">' . $icon . '</span> ' . $label . '</a>';
+        $badgeHtml = $badge > 0 ? '<span style="margin-left:auto;background:#ff3b30;color:#fff;font-size:11px;padding:1px 7px;border-radius:10px;font-weight:600;line-height:1.4">' . $badge . '</span>' : '';
+        echo '<a href="' . $url . '" class="' . $cls . '"><span class="nav-icon">' . $icon . '</span> ' . $label . $badgeHtml . '</a>';
     }
 
     private function menuDivider(string $label): void
     {
         echo '<div class="sidebar-divider">' . htmlspecialchars($label) . '</div>';
+    }
+
+    private function pendingCommentCount(): int
+    {
+        try {
+            $db = \LyBlog\Core\Database::getInstance();
+            if ($db) return $db->count('comments', "status = 'pending'");
+        } catch (\Exception $e) {}
+        return 0;
     }
 
     protected function pageHeader(string $title, string $actionHtml = ''): void

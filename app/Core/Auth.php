@@ -7,9 +7,8 @@ use LyBlog\Models\Role;
 
 class Auth
 {
-    public static function attempt(string $username, string $password): ?array
+    public static function attempt(string $username, string $password, bool $remember = false): ?array
     {
-        // Rate limit check
         if (self::isRateLimited()) {
             return null;
         }
@@ -17,27 +16,79 @@ class Auth
         $user = User::attempt($username, $password);
 
         if ($user) {
-            // Record successful login
             self::logAttempt($username, true);
             Session::login($user['id'], $user['username']);
+
+            if ($remember) {
+                self::setRemember($user['id']);
+            }
+
             return $user;
         }
 
-        // Record failed login
         self::logAttempt($username, false);
         return null;
     }
 
     public static function logout(): void
     {
+        self::clearRemember();
         Session::logout();
     }
 
     public static function user(): ?array
     {
         $userId = Session::getUserId();
+        if (!$userId) {
+            $userId = self::checkRemember();
+        }
         if (!$userId) return null;
         return User::find($userId);
+    }
+
+    /**
+     * Set a "remember me" cookie (30 days).
+     */
+    private static function setRemember(int $userId): void
+    {
+        $token = bin2hex(random_bytes(32));
+        $db = Database::getInstance();
+        if ($db) {
+            $db->update('users', ['remember_token' => $token], 'id = ?', [$userId]);
+        }
+        setcookie('lyblog_remember', $token, time() + 2592000, '/', '', false, true); // 30 days, httpOnly
+    }
+
+    /**
+     * Check remember cookie and auto-login.
+     */
+    private static function checkRemember(): ?int
+    {
+        $token = $_COOKIE['lyblog_remember'] ?? null;
+        if (!$token) return null;
+
+        $db = Database::getInstance();
+        if (!$db) return null;
+
+        $user = $db->fetch("SELECT id FROM {users} WHERE remember_token = ? AND status = 1", [$token]);
+        if ($user) {
+            Session::login($user['id'], '');
+            return (int) $user['id'];
+        }
+
+        self::clearRemember();
+        return null;
+    }
+
+    /**
+     * Clear remember cookie and token.
+     */
+    private static function clearRemember(): void
+    {
+        if (isset($_COOKIE['lyblog_remember'])) {
+            setcookie('lyblog_remember', '', time() - 3600, '/');
+            unset($_COOKIE['lyblog_remember']);
+        }
     }
 
     public static function id(): ?int

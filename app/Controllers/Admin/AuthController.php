@@ -53,7 +53,7 @@ class AuthController extends BaseController
             return;
         }
 
-        $user = Auth::attempt($username, $password);
+        $user = Auth::attempt($username, $password, (bool) $request->getPost('remember'));
 
         if (!$user) {
             Session::flash('error', '用户名或密码错误');
@@ -120,6 +120,7 @@ class AuthController extends BaseController
         echo $csrfField;
         echo '<div class="form-group"><label>用户名或邮箱</label><input type="text" name="username" autocomplete="username" autofocus required></div>';
         echo '<div class="form-group"><label>密码</label><input type="password" name="password" autocomplete="current-password" required></div>';
+        echo '<div style="display:flex;align-items:center;gap:6px;margin-bottom:20px"><input type="checkbox" name="remember" value="1" id="remember-me"><label for="remember-me" style="font-size:13px;color:#6e6e73;margin:0;cursor:pointer">记住我</label></div>';
         echo '<button type="submit" class="btn btn-primary" ' . ($remaining <= 0 ? 'disabled' : '') . '>登 录</button>';
         echo '<p class="attempts">剩余尝试: ' . $remaining . '/5 次</p>';
         echo '</form>';

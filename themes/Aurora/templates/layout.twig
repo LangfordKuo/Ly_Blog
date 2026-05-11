@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ site_name }}{% endblock %}</title>
-    {% block meta %}<meta name="description" content="{{ site_description }}">{% endblock %}
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"{{ site_name }}","description":"{{ site_description }}","url":"{{ site_url }}"}</script>
+    {% block meta %}<meta name="description" content="{{ site_description }}"><meta property="og:title" content="{{ site_name }}"><meta property="og:description" content="{{ site_description }}"><meta property="og:url" content="{{ site_url }}"><meta property="og:type" content="website"><meta property="og:site_name" content="{{ site_name }}"><meta property="og:locale" content="zh_CN"><meta name="twitter:card" content="summary">{% endblock %}
     {% if t_dark_mode == "auto" %}<style>@media(prefers-color-scheme:dark){:root{--bg:#0f0f1a;--card-bg:rgba(30,30,50,0.7);--card-hover:rgba(40,40,65,0.85);--text:#e4e4ed;--text2:#a0a0b8;--text3:#707090;--border:rgba(255,255,255,0.06);--border2:rgba(99,102,241,0.12);--shadow:0 8px 32px rgba(0,0,0,0.2);--shadow-hover:0 16px 48px rgba(0,0,0,0.3);}}</style>{% endif %}
+    {% if canonical_url %}<link rel="canonical" href="{{ canonical_url|escape }}">{% else %}<link rel="canonical" href="{{ site_url }}">{% endif %}
     <link rel="stylesheet" href="{{ site_url }}/themes/Aurora/assets/css/style.css">
     {% if theme_css_vars %}<style>{{ theme_css_vars|raw }}</style>{% endif %}
     {% if theme.custom_css %}<style>{{ theme.custom_css|raw }}</style>{% endif %}
@@ -26,7 +28,7 @@
     </div>
 </header>
 
-<main class="site-main">{% block content %}{% endblock %}</main>
+<main class="site-main">{% if breadcrumb %}<div class="container" style="padding-top:16px">{{ breadcrumb.html|raw }}{{ breadcrumb.ld|raw }}</div>{% endif %}{% block content %}{% endblock %}</main>
 
 <footer class="site-footer">
     <div class="footer-grid">

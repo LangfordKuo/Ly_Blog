@@ -56,6 +56,7 @@ $router->group('/' . $adminPrefix, function (Router $router) {
     $router->get('/articles/{id}/edit', 'Admin\ArticleController@edit');
     $router->post('/articles/{id}/update', 'Admin\ArticleController@update');
     $router->get('/articles/{id}/delete', 'Admin\ArticleController@delete');
+    $router->post('/articles/batch', 'Admin\ArticleController@batch');
 
     // Pages
     $router->get('/pages', 'Admin\PageController@index');
@@ -121,10 +122,12 @@ $router->group('/' . $adminPrefix, function (Router $router) {
     $router->get('/links/{id}/edit', 'Admin\LinkController@edit');
     $router->post('/links/{id}/update', 'Admin\LinkController@update');
     $router->get('/links/{id}/delete', 'Admin\LinkController@delete');
+    $router->get('/links/check-dead', 'Admin\LinkController@checkDead');
 
     // Media
     $router->get('/media', 'Admin\MediaController@index');
     $router->post('/media/upload', 'Admin\MediaController@upload');
+    $router->post('/media/quick-upload', 'Admin\MediaController@quickUpload');
     $router->get('/media/delete', 'Admin\MediaController@delete');
 
     // Themes
@@ -142,6 +145,8 @@ $router->group('/' . $adminPrefix, function (Router $router) {
     $router->get('/settings', 'Admin\SettingController@index');
     $router->post('/settings', 'Admin\SettingController@update');
     $router->get('/settings/clear-cache', 'Admin\SettingController@clearCache');
+    $router->get('/settings/optimize-db', 'Admin\SettingController@optimizeDb');
+    $router->get('/settings/cleanup-data', 'Admin\SettingController@cleanupData');
     $router->post('/settings/test-mail', 'Admin\SettingController@testMail');
 
     // Backup
@@ -157,6 +162,7 @@ $router->get('/login', 'Front\AuthController@loginForm');
 $router->post('/login', 'Front\AuthController@login');
 $router->get('/register', 'Front\AuthController@registerForm');
 $router->post('/register', 'Front\AuthController@register');
+$router->get('/captcha', 'Front\AuthController@captcha');
 $router->get('/logout', 'Front\AuthController@logout');
 $router->get('/article/{slug}', 'Front\ArticleController@show');
 $router->get('/page/{slug}', 'Front\PageController@show');
@@ -184,9 +190,13 @@ $router->group('/user', function (Router $router) {
     $router->post('/profile/password', 'User\ProfileController@updatePassword');
     $router->get('/media', 'User\MediaController@index');
     $router->post('/media/upload', 'User\MediaController@upload');
+    $router->post('/media/quick-upload', 'User\MediaController@quickUpload');
 });
 
 // ─── Dispatch ──────────────────────────────────
 Hook::doAction('before_dispatch', $request);
 $router->dispatch($request);
 Hook::doAction('after_dispatch', $request);
+
+// Log normal page views (non-admin, non-404, non-CLI)
+Router::logPageView($request);

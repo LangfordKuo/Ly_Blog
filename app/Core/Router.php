@@ -110,6 +110,10 @@ class Router
         }
 
         http_response_code(404);
+
+        // Log 404 for monitoring
+        self::log404($request);
+
         echo '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>404</title></head>';
         echo '<body style="font-family:-apple-system,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f5f5f7;color:#1d1d1f;">';
         echo '<div style="text-align:center;"><h1 style="font-size:96px;font-weight:200;margin:0;">404</h1><p>页面未找到</p><a href="/" style="color:#1d1d1f;">← 返回首页</a></div>';
@@ -152,5 +156,63 @@ class Router
     public function getRoutes(): array
     {
         return $this->routes;
+    }
+
+    private static function log404(Request $request): void
+    {
+        try {
+            $db = \LyBlog\Core\Database::getInstance();
+            if (!$db) return;
+
+            // Create table if not exists
+            $db->query("CREATE TABLE IF NOT EXISTS {page_log} (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                uri VARCHAR(500) NOT NULL,
+                referer VARCHAR(500) DEFAULT NULL,
+                ip VARCHAR(45) DEFAULT NULL,
+                user_agent VARCHAR(500) DEFAULT NULL,
+                is_404 TINYINT(1) NOT NULL DEFAULT 0,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_404 (is_404, created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            $db->insert('page_log', [
+                'uri'        => $request->getPath(),
+                'referer'    => $request->getReferer(),
+                'ip'         => $request->getIp(),
+                'user_agent' => $request->getUserAgent(),
+                'is_404'     => 1,
+            ]);
+        } catch (\Exception $e) {}
+    }
+
+    /**
+     * Record a page view (non-404, non-admin).
+     */
+    public static function logPageView(Request $request): void
+    {
+        try {
+            $db = \LyBlog\Core\Database::getInstance();
+            if (!$db) return;
+
+            $db->query("CREATE TABLE IF NOT EXISTS {page_log} (
+                id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                uri VARCHAR(500) NOT NULL,
+                referer VARCHAR(500) DEFAULT NULL,
+                ip VARCHAR(45) DEFAULT NULL,
+                user_agent VARCHAR(500) DEFAULT NULL,
+                is_404 TINYINT(1) NOT NULL DEFAULT 0,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_404 (is_404, created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+            $db->insert('page_log', [
+                'uri'        => $request->getPath(),
+                'referer'    => $request->getReferer(),
+                'ip'         => $request->getIp(),
+                'user_agent' => $request->getUserAgent(),
+                'is_404'     => 0,
+            ]);
+        } catch (\Exception $e) {}
     }
 }

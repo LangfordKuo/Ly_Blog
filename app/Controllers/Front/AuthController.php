@@ -8,6 +8,7 @@ use LyBlog\Core\Config;
 use LyBlog\Core\Request;
 use LyBlog\Core\Session;
 use LyBlog\Core\Validator;
+use LyBlog\Core\Captcha;
 use LyBlog\Models\User;
 
 class AuthController extends BaseController
@@ -49,6 +50,7 @@ class AuthController extends BaseController
         echo '<form method="post" action="' . $this->siteUrl('login') . '">' . $csrfField;
         echo '<div class="form-group"><label>用户名或邮箱</label><input type="text" name="username" required autofocus></div>';
         echo '<div class="form-group"><label>密码</label><input type="password" name="password" required></div>';
+        echo '<div style="display:flex;align-items:center;gap:6px;margin-bottom:18px"><input type="checkbox" name="remember" value="1" id="remember-me"><label for="remember-me" style="font-size:13px;color:#6e6e73;margin:0;cursor:pointer">记住我（30天）</label></div>';
         echo '<button type="submit" class="btn btn-primary">登 录</button></form>';
         echo '<div class="links"><a href="' . $this->siteUrl() . '">← 首页</a>';
         if ($registrationOpen) echo ' · <a href="' . $this->siteUrl('register') . '">注册账号</a>';
@@ -78,7 +80,7 @@ class AuthController extends BaseController
             return;
         }
 
-        $user = Auth::attempt($username, $password);
+        $user = Auth::attempt($username, $password, (bool) $request->getPost('remember'));
 
         if (!$user) {
             Session::flash('error', '用户名或密码错误');
@@ -136,6 +138,7 @@ class AuthController extends BaseController
         echo '<div class="form-group"><label>邮箱</label><input type="email" name="email" required></div>';
         echo '<div class="form-group"><label>密码</label><input type="password" name="password" required minlength="6"><p class="help">至少6个字符</p></div>';
         echo '<div class="form-group"><label>确认密码</label><input type="password" name="password_confirm" required minlength="6"></div>';
+        echo '<div class="form-group"><label>验证码</label><div style="display:flex;gap:10px;align-items:center"><input type="text" name="captcha" required maxlength="4" style="flex:1;text-transform:uppercase" placeholder="请输入验证码"><img src="' . $this->siteUrl('captcha') . '" onclick="this.src=\'' . $this->siteUrl('captcha') . '?\'+Date.now()" style="height:40px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);cursor:pointer" alt="验证码" title="点击刷新"></div></div>';
         echo '<button type="submit" class="btn btn-primary">注 册</button></form>';
         echo '<div class="links"><a href="' . $this->siteUrl() . '">← 首页</a> · <a href="' . $this->siteUrl('login') . '">登录</a></div>';
         echo '</div></body></html>';
@@ -173,6 +176,13 @@ class AuthController extends BaseController
             return;
         }
 
+        // Validate captcha
+        if (!Captcha::validate($request->getPost('captcha', ''))) {
+            Session::flash('error', '验证码错误');
+            $this->redirect($this->siteUrl('register'));
+            return;
+        }
+
         if ($data['password'] !== $passwordConfirm) {
             Session::flash('error', '两次输入的密码不一致');
             $this->redirect($this->siteUrl('register'));
@@ -199,6 +209,11 @@ class AuthController extends BaseController
             Session::flash('error', '注册失败，请重试');
             $this->redirect($this->siteUrl('register'));
         }
+    }
+
+    public function captcha(Request $request)
+    {
+        Captcha::output();
     }
 
     public function logout(Request $request)

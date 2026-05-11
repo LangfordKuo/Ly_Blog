@@ -11,6 +11,7 @@ use LyBlog\Models\Category;
 use LyBlog\Models\Tag;
 use LyBlog\Models\Comment;
 use LyBlog\Models\Like;
+use LyBlog\Helpers\Str;
 
 class ArticleController extends BaseController
 {
@@ -37,6 +38,9 @@ class ArticleController extends BaseController
 
         $this->incrementViewOnce($article['id']);
 
+        // Apply shortcodes
+        $article['content'] = Str::shortcodes($article['content']);
+
         $comments = Comment::getNested($article['id']);
         $tags = Article::getTags($article['id']);
         $category = Category::find($article['category_id']);
@@ -49,6 +53,9 @@ class ArticleController extends BaseController
 
         // Author info
         $author = \LyBlog\Models\User::find($article['author_id']);
+        if ($author) {
+            $author['avatar_url'] = Str::gravatar($author['email'] ?? '', 64);
+        }
 
         // Related articles (same category or tags)
         $related = [];
@@ -64,6 +71,15 @@ class ArticleController extends BaseController
         // Pre-render comments HTML
         $commentsHtml = $this->renderCommentsHtml($comments);
 
+        // Breadcrumb
+        $bc = [['🏠 ' . Config::get('site_name', '首页'), $this->siteUrl()]];
+        if ($category) {
+            $bc[] = [$category['name'], $this->siteUrl('category/' . $category['slug'])];
+        }
+        $bc[] = [$article['title'], null];
+        $breadcrumb = $this->breadcrumb($bc);
+        $jsonLd = $this->jsonLdArticle($article, $author, $category);
+
         $this->display('article', [
             'article'       => $article,
             'comments'      => $comments,
@@ -74,6 +90,11 @@ class ArticleController extends BaseController
             'liked'         => $liked,
             'author'        => $author,
             'related'       => $related,
+            'prev'          => Article::getPrev($article['id']),
+            'next'          => Article::getNext($article['id']),
+            'breadcrumb'    => $breadcrumb,
+            'canonical_url' => $this->siteUrl('article/' . $article['slug']),
+            'json_ld'       => $jsonLd,
             'csrf_field'    => Session::csrfField(),
             'csrf_token'    => Session::csrfToken(),
         ]);
@@ -84,7 +105,17 @@ class ArticleController extends BaseController
         $html = '';
         foreach ($comments as $comment) {
             $html .= '<div class="comment" style="margin-left:' . ($depth * 20) . 'px">';
-            $html .= '<div class="comment-avatar">' . strtoupper(mb_substr($comment['author_name'], 0, 1)) . '</div>';
+            $gravatarUrl = '';
+            if (!empty($comment['author_email'])) {
+                $gravatarUrl = Str::gravatar($comment['author_email'], 44);
+            }
+            $html .= '<div class="comment-avatar">';
+            if ($gravatarUrl) {
+                $html .= '<img src="' . $gravatarUrl . '" width="44" height="44" style="border-radius:50%" alt="">';
+            } else {
+                $html .= strtoupper(mb_substr($comment['author_name'], 0, 1));
+            }
+            $html .= '</div>';
             $html .= '<div class="comment-body">';
             $html .= '<div class="comment-meta"><strong>' . htmlspecialchars($comment['author_name']) . '</strong>';
             $html .= '<span>' . date('Y-m-d H:i', strtotime($comment['created_at'])) . '</span></div>';

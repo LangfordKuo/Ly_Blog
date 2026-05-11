@@ -165,6 +165,52 @@ class MediaController extends BaseAdminController
         $this->redirect($this->adminUrl('media'));
     }
 
+    public function quickUpload(Request $request)
+    {
+        if (!Session::validateCsrf()) {
+            $this->json(['success' => false, 'message' => '安全令牌无效'], 403);
+            return;
+        }
+
+        if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            $this->json(['success' => false, 'message' => '上传失败'], 400);
+            return;
+        }
+
+        $file = $_FILES['file'];
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+
+        if (!in_array($ext, $allowed)) {
+            $this->json(['success' => false, 'message' => '不支持的文件类型'], 400);
+            return;
+        }
+
+        if ($file['size'] > 10 * 1024 * 1024) {
+            $this->json(['success' => false, 'message' => '文件过大，最大 10MB'], 400);
+            return;
+        }
+
+        $uploadDir = PUBLIC_DIR . '/uploads';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+        $filename = Sanitizer::filename(pathinfo($file['name'], PATHINFO_FILENAME)) . '.' . $ext;
+        $filepath = $uploadDir . '/' . $filename;
+        $i = 1;
+        while (file_exists($filepath)) {
+            $filename = Sanitizer::filename(pathinfo($file['name'], PATHINFO_FILENAME)) . '-' . $i . '.' . $ext;
+            $filepath = $uploadDir . '/' . $filename;
+            $i++;
+        }
+
+        if (move_uploaded_file($file['tmp_name'], $filepath)) {
+            $url = Config::get('site_url') . '/uploads/' . $filename;
+            $this->json(['success' => true, 'url' => $url, 'name' => $filename]);
+        } else {
+            $this->json(['success' => false, 'message' => '保存失败'], 500);
+        }
+    }
+
     public function delete(Request $request)
     {
         $filename = $request->getQuery('file', '');

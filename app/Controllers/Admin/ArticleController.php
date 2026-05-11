@@ -47,14 +47,28 @@ class ArticleController extends BaseAdminController
         echo '<button type="submit" class="btn btn-secondary btn-sm">筛选</button>';
         echo '</form></div>';
 
-        $headers = ['ID', '标题', '分类', '状态', '阅读', '发布时间', '操作'];
+        // Batch actions
+        echo '<form method="post" action="' . $this->adminUrl('articles/batch') . '" id="batch-form">';
+        echo Session::csrfField();
+        echo '<div class="card" style="padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px">';
+        echo '<input type="checkbox" onclick="document.querySelectorAll(\'.batch-check\').forEach(c=>c.checked=this.checked)" style="margin-right:8px"> 全选';
+        echo '<select name="action" style="width:auto;margin-left:auto">';
+        echo '<option value="delete">删除选中</option>';
+        echo '<option value="publish">设为发布</option>';
+        echo '<option value="draft">设为草稿</option>';
+        echo '</select>';
+        echo '<button type="submit" class="btn btn-sm btn-secondary" onclick="return confirm(\'确定执行批量操作？\')">执行</button>';
+        echo '</div>';
+
+        $headers = ['', 'ID', '标题', '分类', '状态', '阅读', '发布时间', '操作'];
         $rows = [];
         foreach ($data['items'] as $a) {
             $catName = '';
             foreach ($categories as $c) { if ($c['id'] == $a['category_id']) $catName = $c['name']; }
             $rows[] = [
+                '<input type="checkbox" name="ids[]" value="' . $a['id'] . '" class="batch-check">',
                 $a['id'],
-                '<a href="' . $this->siteUrl('article/' . $a['slug']) . '" target="_blank">' . htmlspecialchars($a['title']) . '</a>',
+                ($a['is_pinned'] ? '📌 ' : '') . '<a href="' . $this->siteUrl('article/' . $a['slug']) . '" target="_blank">' . htmlspecialchars($a['title']) . '</a>',
                 htmlspecialchars($catName),
                 $this->statusBadge($a['status']),
                 $a['views'],
@@ -63,6 +77,7 @@ class ArticleController extends BaseAdminController
             ];
         }
         $this->table($headers, $rows, '暂无文章');
+        echo '</form>';
         $this->pagination($data, $this->adminUrl('articles'));
         $this->adminFooter();
     }
@@ -132,6 +147,48 @@ class ArticleController extends BaseAdminController
         $this->redirect($this->adminUrl('articles'));
     }
 
+    public function batch(Request $request)
+    {
+        if (!Session::validateCsrf()) {
+            Session::flash('error', '安全令牌无效');
+            $this->redirect($this->adminUrl('articles'));
+            return;
+        }
+
+        $ids = $request->getPost('ids', []);
+        $action = $request->getPost('action', 'delete');
+
+        if (empty($ids) || !is_array($ids)) {
+            Session::flash('error', '请选择文章');
+            $this->redirect($this->adminUrl('articles'));
+            return;
+        }
+
+        $count = 0;
+        foreach ($ids as $id) {
+            $id = (int) $id;
+            if ($id <= 0) continue;
+
+            switch ($action) {
+                case 'delete':
+                    Article::delete($id);
+                    $count++;
+                    break;
+                case 'publish':
+                    Article::update($id, ['status' => 'published', 'published_at' => date('Y-m-d H:i:s')]);
+                    $count++;
+                    break;
+                case 'draft':
+                    Article::update($id, ['status' => 'draft']);
+                    $count++;
+                    break;
+            }
+        }
+
+        Session::flash('success', "已处理 {$count} 篇文章");
+        $this->redirect($this->adminUrl('articles'));
+    }
+
     private function renderForm(array $article = null): void
     {
         $isEdit = $article !== null;
@@ -153,7 +210,13 @@ class ArticleController extends BaseAdminController
             $sel = ($article['status'] ?? 'draft') === $k ? 'selected' : '';
             echo '<option value="' . $k . '" ' . $sel . '>' . $v . '</option>';
         }
-        echo '</select></div>';
+        echo '</select>';
+        echo '<label style="margin-top:8px;display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">';
+        echo '<input type="hidden" name="is_pinned" value="0">';
+        $checked = ($article['is_pinned'] ?? 0) ? 'checked' : '';
+        echo '<input type="checkbox" name="is_pinned" value="1" ' . $checked . '> 置顶文章';
+        echo '</label>';
+        echo '</div>';
         echo '</div>';
 
         echo '<div class="form-row">';
@@ -174,5 +237,80 @@ class ArticleController extends BaseAdminController
 
         echo '<button type="submit" class="btn btn-primary">' . ($isEdit ? '更新' : '发布') . '</button>';
         echo '</form></div>';
+
+        echo '<script src="' . $this->siteUrl('assets/js/markdown-preview.js') . '"></script>';
+        echo '<script>var LYBLOG_UPLOAD_URL="' . $this->adminUrl('media/quick-upload') . '";var LYBLOG_CSRF="' . Session::csrfToken() . '";</script>';
+        echo '<script src="' . $this->siteUrl('assets/js/image-upload.js') . '"></script>';
+
+        // Auto-save draft script
+        $draftKey = 'lyblog_draft_' . ($article['id'] ?? 'new');
+        echo '<div id="draft-banner" style="display:none;background:rgba(255,149,0,0.08);color:#ff9500;padding:10px 16px;border-radius:8px;margin-top:12px;font-size:13px;display:none">
+            📝 检测到未保存的草稿 · <a href="#" onclick="restoreDraft();return false">恢复</a> · <a href="#" onclick="clearDraft();return false" style="color:#ff3b30">丢弃</a>
+        </div>';
+        echo '<script>
+            (function(){
+                var form = document.querySelector(".card form");
+                if (!form) return;
+                var key = "' . $draftKey . '";
+                var saveTimer = null;
+                var banner = document.getElementById("draft-banner");
+                var lastSaved = "";
+
+                // Check for saved draft on load
+                var saved = localStorage.getItem(key);
+                if (saved && banner) {
+                    try {
+                        var data = JSON.parse(saved);
+                        if (data.content && data.content.trim()) {
+                            banner.style.display = "block";
+                            window._draftData = data;
+                        }
+                    } catch(e) {}
+                }
+
+                // Auto-save every 20 seconds if form changed
+                function autoSave() {
+                    var data = {
+                        title: (form.querySelector("[name=title]")||{}).value || "",
+                        slug: (form.querySelector("[name=slug]")||{}).value || "",
+                        content: (form.querySelector("[name=content]")||{}).value || "",
+                        excerpt: (form.querySelector("[name=excerpt]")||{}).value || "",
+                        tags: (form.querySelector("[name=tags]")||{}).value || "",
+                        cover_image: (form.querySelector("[name=cover_image]")||{}).value || "",
+                        category_id: (form.querySelector("[name=category_id]")||{}).value || "",
+                        saved_at: new Date().toLocaleString()
+                    };
+                    var current = JSON.stringify(data);
+                    if (current !== lastSaved) {
+                        localStorage.setItem(key, current);
+                        lastSaved = current;
+                    }
+                }
+                setInterval(autoSave, 20000);
+                autoSave();
+
+                // Clear draft on form submit
+                form.addEventListener("submit", function() { localStorage.removeItem(key); });
+
+                // Restore function
+                window.restoreDraft = function() {
+                    if (!window._draftData) return;
+                    var d = window._draftData;
+                    var setVal = function(name, val) { var el = form.querySelector("[name="+name+"]"); if (el && val) el.value = val; };
+                    setVal("title", d.title);
+                    setVal("slug", d.slug);
+                    setVal("content", d.content);
+                    setVal("excerpt", d.excerpt);
+                    setVal("tags", d.tags);
+                    setVal("cover_image", d.cover_image);
+                    setVal("category_id", d.category_id);
+                    if (banner) banner.style.display = "none";
+                };
+                window.clearDraft = function() {
+                    localStorage.removeItem(key);
+                    if (banner) banner.style.display = "none";
+                };
+            })();
+        </script>';
     }
 }

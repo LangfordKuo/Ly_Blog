@@ -26,6 +26,7 @@ class SettingController extends BaseAdminController
             'log_level'      => 'error',
             'cache_driver'   => 'file',
             'registration'   => '0',
+            'maintenance_mode' => '0',
             'comment_moderation' => 'approved',
             'comment_notification' => '0',
             'smtp_host'      => '',
@@ -66,8 +67,10 @@ class SettingController extends BaseAdminController
         echo '<h3 style="font-size:16px;font-weight:500;margin:24px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border)">安全与注册</h3>';
         echo '<div class="form-row">';
         echo '<div class="form-group"><label>开放注册</label><select name="registration"><option value="1" ' . ($settings['registration'] == '1' ? 'selected' : '') . '>开启</option><option value="0" ' . ($settings['registration'] == '0' ? 'selected' : '') . '>关闭</option></select></div>';
-        echo '<div class="form-group"><label>后台路径 (修改后需重新登录)</label><input type="text" name="admin_path" value="' . htmlspecialchars(Config::get('admin_path', 'admin')) . '"></div>';
-        echo '</div>';
+        echo '<div class="form-group"><label>维护模式</label><select name="maintenance_mode">';
+        echo '<option value="0" ' . ($settings['maintenance_mode'] == '0' ? 'selected' : '') . '>正常</option>';
+        echo '<option value="1" ' . ($settings['maintenance_mode'] == '1' ? 'selected' : '') . '>维护中</option>';
+        echo '</select><p class="help-text" style="font-size:12px;color:var(--text-2)">管理员仍可正常访问</p></div></div>';
 
         echo '<h3 style="font-size:16px;font-weight:500;margin:24px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border)">缓存</h3>';
         echo '<div class="form-row"><div class="form-group"><label>缓存驱动</label><select name="cache_driver">';
@@ -155,6 +158,14 @@ class SettingController extends BaseAdminController
         echo '<a href="' . $this->adminUrl('settings/clear-cache') . '" class="btn btn-secondary" onclick="return confirm(\'确定要清除缓存吗？\')">清除缓存</a>';
         echo '</div>';
 
+        // Database optimization
+        echo '<div class="card" style="margin-top:20px"><div class="card-header"><h2>数据库优化</h2></div>';
+        echo '<p style="color:var(--text-2);margin-bottom:16px">优化数据库表并清理过期日志和修订</p>';
+        echo '<div style="display:flex;gap:8px">';
+        echo '<a href="' . $this->adminUrl('settings/optimize-db') . '" class="btn btn-secondary" onclick="return confirm(\'确定要优化数据库吗？\')">优化数据表</a>';
+        echo '<a href="' . $this->adminUrl('settings/cleanup-data') . '" class="btn btn-secondary" onclick="return confirm(\'将清理30天前的页面日志和旧修订，确定？\')">清理旧数据</a>';
+        echo '</div></div>';
+
         $this->adminFooter();
     }
 
@@ -165,7 +176,7 @@ class SettingController extends BaseAdminController
         $fields = [
             'site_name', 'site_description', 'site_keywords', 'timezone',
             'log_level', 'cache_driver', 'registration',
-            'footer_text',
+            'maintenance_mode', 'footer_text',
         ];
 
         // Only super_admin can change notification/SMTP settings
@@ -265,6 +276,44 @@ class SettingController extends BaseAdminController
         $cacheDir = STORAGE_DIR . '/cache';
         $this->clearDir($cacheDir);
         Session::flash('success', '缓存已清除');
+        $this->redirect($this->adminUrl('settings'));
+    }
+
+    public function optimizeDb(Request $request)
+    {
+        try {
+            $db = Database::getInstance();
+            $tables = $db->fetchAll("SHOW TABLES");
+            foreach ($tables as $row) {
+                $table = current($row);
+                $db->query("OPTIMIZE TABLE `{$table}`");
+            }
+            Session::flash('success', '数据库优化完成');
+        } catch (\Exception $e) {
+            Session::flash('error', '优化失败: ' . $e->getMessage());
+        }
+        $this->redirect($this->adminUrl('settings'));
+    }
+
+    public function cleanupData(Request $request)
+    {
+        try {
+            $db = Database::getInstance();
+            $cutoff = date('Y-m-d H:i:s', time() - 2592000); // 30 days
+
+            // Clean old page logs
+            $count1 = $db->delete('page_log', 'created_at < ?', [$cutoff]);
+
+            // Clean old login logs
+            $count2 = $db->delete('login_log', 'created_at < ?', [$cutoff]);
+
+            // Clean cache on disk
+            $this->clearDir(STORAGE_DIR . '/cache');
+
+            Session::flash('success', "已清理 {$count1} 条访问日志, {$count2} 条登录日志");
+        } catch (\Exception $e) {
+            Session::flash('error', '清理失败: ' . $e->getMessage());
+        }
         $this->redirect($this->adminUrl('settings'));
     }
 

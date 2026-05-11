@@ -13,7 +13,7 @@ class LinkController extends BaseAdminController
     {
         $links = Link::all('sort_order ASC');
         $this->adminHeader('友情链接', 'links');
-        $this->pageHeader('友情链接', '<a href="' . $this->adminUrl('links/create') . '" class="btn btn-primary">添加链接</a>');
+        $this->pageHeader('友情链接', '<a href="' . $this->adminUrl('links/create') . '" class="btn btn-primary">添加链接</a> <a href="' . $this->adminUrl('links/check-dead') . '" class="btn btn-secondary">检测死链</a>');
         $this->flashMessages();
 
         $headers = ['ID', '名称', 'URL', '描述', '排序', '状态', '操作'];
@@ -77,6 +77,21 @@ class LinkController extends BaseAdminController
     {
         Link::delete((int) $id);
         Session::flash('success', '链接已删除');
+        $this->redirect($this->adminUrl('links'));
+    }
+
+    public function checkDead(Request $request)
+    {
+        $links = Link::all();
+        $dead = 0;
+        foreach ($links as $link) {
+            $headers = @get_headers($link['url'], 1);
+            if (!$headers || strpos($headers[0], '200') === false && strpos($headers[0], '301') === false && strpos($headers[0], '302') === false) {
+                Link::update($link['id'], ['status' => 0]);
+                $dead++;
+            }
+        }
+        Session::flash('success', "检测完成，{$dead} 个失效链接已自动隐藏");
         $this->redirect($this->adminUrl('links'));
     }
 

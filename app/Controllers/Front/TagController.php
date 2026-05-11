@@ -18,12 +18,14 @@ class TagController extends BaseController
 
         $page = (int) ($request->getQuery('page', 1));
         $data = Article::getByTag($slug, $page, 10);
+        $bc = $this->breadcrumb([['首页', $this->siteUrl()], ['标签: ' . $tag['name'], null]]);
 
         $this->display('tag', [
             'tag'       => $tag,
             'items'     => $data['items'],
-            'has_more'  => $data['has_more'],
-            'next_page' => $data['current_page'] + 1,
+            'has_more'   => $data['has_more'],
+            'next_page'  => $data['current_page'] + 1,
+            'breadcrumb' => $bc,
         ]);
     }
 }

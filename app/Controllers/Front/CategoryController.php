@@ -18,12 +18,14 @@ class CategoryController extends BaseController
 
         $page = (int) ($request->getQuery('page', 1));
         $data = Article::getPublished($page, 10, $category['id']);
+        $bc = $this->breadcrumb([['首页', $this->siteUrl()], ['分类: ' . $category['name'], null]]);
 
         $this->display('category', [
             'category'  => $category,
             'items'     => $data['items'],
-            'has_more'  => $data['has_more'],
-            'next_page' => $data['current_page'] + 1,
+            'has_more'   => $data['has_more'],
+            'next_page'  => $data['current_page'] + 1,
+            'breadcrumb' => $bc,
         ]);
     }
 }

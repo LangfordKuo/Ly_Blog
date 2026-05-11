@@ -24,6 +24,7 @@ class HomeController extends BaseController
             'next_page'      => $data['current_page'] + 1,
             'categories'     => $categories,
             'tags'           => $tags,
+            'popular'        => Article::getPopular(5),
             'article_count'  => Article::count("status = 'published'"),
             'comment_count'  => Comment::count("status = 'approved'"),
             'tag_count'      => Tag::count(),
