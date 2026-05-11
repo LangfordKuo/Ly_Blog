@@ -22,7 +22,7 @@
 
     {% if tags|length > 0 %}<div style="display:flex;gap:8px;flex-wrap:wrap;padding:20px 0">{% for tag in tags %}<a href="{{ site_url }}/tag/{{ tag.slug|escape }}" class="tag">{{ tag.name|escape }}</a>{% endfor %}</div>{% endif %}
 
-    <div class="article-actions"><button class="like-btn{% if liked %} liked{% endif %}" data-id="{{ article.id }}" data-csrf="{{ csrf_token }}">❤ <span class="count">{{ article.likes }}</span></button></div>
+    <div class="article-actions"><button class="like-btn{% if liked %} liked{% endif %}" data-id="{{ article.id }}" data-csrf="{{ csrf_token }}">❤ <span class="count">{{ article.likes }}</span></button><button class="share-btn" onclick="copyLink()" id="copy-link-btn" style="margin-left:auto">📋 复制链接</button></div>
 
     {% if author %}<div class="author-box">{% if author.avatar_url %}<img src="{{ author.avatar_url|escape }}" width="64" height="64" style="border-radius:50%" alt="">{% else %}<div class="author-avatar">{{ author.display_name|slice('0,1')|upper }}</div>{% endif %}<div class="author-info"><h4>{{ author.display_name|escape }}</h4><p>{{ author.bio|escape }}</p></div></div>{% endif %}
 
@@ -32,3 +32,4 @@
 
     {% if prev or next %}<div class="article-nav" style="display:flex;justify-content:space-between;gap:16px;margin-top:40px;padding:24px 0;border-top:1px solid var(--border)">{% if prev %}<a href="{{ site_url }}/article/{{ prev.slug|escape }}" style="flex:1;text-align:left"><span style="font-size:12px;color:var(--text3);display:block">← 上一篇</span><span style="font-weight:600">{{ prev.title|escape }}</span></a>{% else %}<span style="flex:1"></span>{% endif %}{% if next %}<a href="{{ site_url }}/article/{{ next.slug|escape }}" style="flex:1;text-align:right"><span style="font-size:12px;color:var(--text3);display:block">下一篇 →</span><span style="font-weight:600">{{ next.title|escape }}</span></a>{% endif %}</div>{% endif %}
 </article>{% endblock %}
+{% block scripts %}<script>function replyTo(id,name){var f=document.querySelector(".comment-form form");var p=document.querySelector("input[name=parent_id]");if(!p){p=document.createElement("input");p.type="hidden";p.name="parent_id";f.appendChild(p)}p.value=id;var t=f.querySelector("textarea");if(t){t.placeholder="回复 @"+name+"...";t.focus()}f.querySelector("h3").textContent="回复: "+name;window.scrollTo({top:f.offsetTop-80,behavior:"smooth"})}function copyLink(){var u=window.location.href;if(navigator.clipboard){navigator.clipboard.writeText(u).then(function(){copyBtn.textContent="已复制!";setTimeout(function(){copyBtn.textContent="📋 复制链接"},2000)})}else{prompt("复制此链接:",u)}}var copyBtn=document.getElementById("copy-link-btn");</script>{% endblock %}

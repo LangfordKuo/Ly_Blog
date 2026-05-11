@@ -120,6 +120,9 @@ class ArticleController extends BaseController
             $html .= '<div class="comment-meta"><strong>' . htmlspecialchars($comment['author_name']) . '</strong>';
             $html .= '<span>' . date('Y-m-d H:i', strtotime($comment['created_at'])) . '</span></div>';
             $html .= '<div class="comment-content">' . nl2br(htmlspecialchars($comment['content'])) . '</div>';
+            if ($depth < 3) {
+                $html .= '<button class="comment-reply-btn" onclick="replyTo(' . $comment['id'] . ',\'' . htmlspecialchars($comment['author_name']) . '\')">↩ 回复 ' . htmlspecialchars($comment['author_name']) . '</button>';
+            }
             $html .= '</div></div>';
 
             if (!empty($comment['children'])) {
