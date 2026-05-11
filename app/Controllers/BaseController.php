@@ -22,6 +22,7 @@ class BaseController
         $this->view->addGlobal('site_keywords', Config::get('site_keywords', ''));
         $this->view->addGlobal('footer_text', Config::get('footer_text', ''));
         $this->view->addGlobal('now_year', date('Y'));
+        $this->view->addGlobal('is_logged_in', Session::isLoggedIn());
     }
 
     protected function render(string $template, array $data = []): string

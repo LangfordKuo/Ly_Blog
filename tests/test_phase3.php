@@ -59,8 +59,8 @@ check('subscriber cannot create article', !Role::hasPermission($subscriber, 'art
 // canAccessAdmin
 check('superadmin can access admin', Role::canAccessAdmin($superAdmin));
 check('admin can access admin', Role::canAccessAdmin($admin));
-check('editor can access admin', Role::canAccessAdmin($editor));
-check('author can access admin', Role::canAccessAdmin($author));
+check('editor cannot access admin', !Role::canAccessAdmin($editor));
+check('author cannot access admin', !Role::canAccessAdmin($author));
 check('subscriber cannot access admin', !Role::canAccessAdmin($subscriber));
 
 // getAllPermissions

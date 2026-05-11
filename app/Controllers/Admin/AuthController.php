@@ -123,7 +123,11 @@ class AuthController extends BaseController
         echo '<button type="submit" class="btn btn-primary" ' . ($remaining <= 0 ? 'disabled' : '') . '>登 录</button>';
         echo '<p class="attempts">剩余尝试: ' . $remaining . '/5 次</p>';
         echo '</form>';
-        echo '<div class="back-link"><a href="' . $this->siteUrl() . '">← 返回前台</a></div>';
+        echo '<div class="back-link"><a href="' . $this->siteUrl() . '">← 返回前台</a>';
+        if (Config::get('registration') == '1') {
+            echo ' · <a href="' . $this->siteUrl('register') . '">注册账号</a>';
+        }
+        echo '</div>';
         echo '</div></div></body></html>';
     }
 }

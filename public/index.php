@@ -140,6 +140,7 @@ $router->group('/' . $adminPrefix, function (Router $router) {
     $router->get('/settings', 'Admin\SettingController@index');
     $router->post('/settings', 'Admin\SettingController@update');
     $router->get('/settings/clear-cache', 'Admin\SettingController@clearCache');
+    $router->post('/settings/test-mail', 'Admin\SettingController@testMail');
 
     // Backup
     $router->get('/backup', 'Admin\BackupController@index');
@@ -150,6 +151,11 @@ $router->group('/' . $adminPrefix, function (Router $router) {
 
 // ─── Front Routes ───────────────────────────────
 $router->get('/', 'Front\HomeController@index');
+$router->get('/login', 'Front\AuthController@loginForm');
+$router->post('/login', 'Front\AuthController@login');
+$router->get('/register', 'Front\AuthController@registerForm');
+$router->post('/register', 'Front\AuthController@register');
+$router->get('/logout', 'Front\AuthController@logout');
 $router->get('/article/{slug}', 'Front\ArticleController@show');
 $router->get('/page/{slug}', 'Front\PageController@show');
 $router->post('/comment/{articleId}', 'Front\CommentController@store');
@@ -161,6 +167,22 @@ $router->get('/tag/{slug}', 'Front\TagController@show');
 $router->get('/category/{slug}', 'Front\CategoryController@show');
 $router->post('/like/{articleId}', 'Front\LikeController@toggle');
 $router->get('/rss', 'Front\RssController@index');
+
+// ─── User Panel Routes ─────────────────────────
+$router->group('/user', function (Router $router) {
+    $router->get('/', 'User\DashboardController@index');
+    $router->get('/articles', 'User\ArticleController@index');
+    $router->get('/articles/create', 'User\ArticleController@create');
+    $router->post('/articles', 'User\ArticleController@store');
+    $router->get('/articles/{id}/edit', 'User\ArticleController@edit');
+    $router->post('/articles/{id}/update', 'User\ArticleController@update');
+    $router->get('/articles/{id}/delete', 'User\ArticleController@delete');
+    $router->get('/profile', 'User\ProfileController@index');
+    $router->post('/profile', 'User\ProfileController@update');
+    $router->post('/profile/password', 'User\ProfileController@updatePassword');
+    $router->get('/media', 'User\MediaController@index');
+    $router->post('/media/upload', 'User\MediaController@upload');
+});
 
 // ─── Dispatch ──────────────────────────────────
 Hook::doAction('before_dispatch', $request);

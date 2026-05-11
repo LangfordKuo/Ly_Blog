@@ -29,15 +29,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ];
 
             $appConfig = [
-                'site_name'   => $_POST['site_name'],
-                'site_url'    => rtrim($_POST['site_url'], '/'),
-                'admin_path'  => trim($_POST['admin_path'], '/') ?: 'admin',
-                'debug'       => false,
-                'timezone'    => 'Asia/Shanghai',
-                'log_level'   => 'error',
-                'cache_driver' => 'file',
-                'registration' => false,
-                'theme'        => 'Default',
+                'site_name'     => $_POST['site_name'],
+                'site_url'      => rtrim($_POST['site_url'], '/'),
+                'admin_path'    => trim($_POST['admin_path'], '/') ?: 'admin',
+                'debug'         => false,
+                'timezone'      => 'Asia/Shanghai',
+                'log_level'     => 'error',
+                'cache_driver'  => 'file',
+                'registration'  => false,
+                'theme'         => 'Default',
+                'comment_notification' => false,
+                'comment_moderation'   => 'approved',
             ];
 
             $adminUser = $_POST['admin_user'];

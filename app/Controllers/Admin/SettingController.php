@@ -6,7 +6,8 @@ use LyBlog\Core\Request;
 use LyBlog\Core\Session;
 use LyBlog\Core\Config;
 use LyBlog\Core\Database;
-use LyBlog\Core\Cache;
+use LyBlog\Core\Auth;
+use LyBlog\Core\Mailer;
 
 class SettingController extends BaseAdminController
 {
@@ -79,6 +80,72 @@ class SettingController extends BaseAdminController
         }
         echo '</select></div></div>';
 
+        // Notification section — super_admin only
+        if (\LyBlog\Core\Auth::hasRole('super_admin')) {
+            echo '<h3 style="font-size:16px;font-weight:500;margin:24px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border)">🔔 邮件通知 (仅超级管理员可见)</h3>';
+
+            echo '<div class="form-row"><div class="form-group"><label>评论通知</label><select name="comment_notification">';
+            echo '<option value="0" ' . ($settings['comment_notification'] == '0' ? 'selected' : '') . '>关闭</option>';
+            echo '<option value="1" ' . ($settings['comment_notification'] == '1' ? 'selected' : '') . '>开启</option>';
+            echo '</select><p class="help-text" style="font-size:12px;color:var(--text-2)">有新评论时发送邮件通知</p></div>';
+
+            echo '<div class="form-group"><label>评论审核</label><select name="comment_moderation">';
+            echo '<option value="approved" ' . (($settings['comment_moderation'] ?? 'approved') === 'approved' ? 'selected' : '') . '>直接发布</option>';
+            echo '<option value="pending" ' . (($settings['comment_moderation'] ?? '') === 'pending' ? 'selected' : '') . '>先审后发</option>';
+            echo '</select></div></div>';
+
+            echo '<h4 style="font-size:14px;font-weight:500;margin:16px 0 12px;color:var(--text-2)">SMTP 服务器配置</h4>';
+            echo '<div class="form-row"><div class="form-group"><label>SMTP 主机</label><input type="text" name="smtp_host" value="' . htmlspecialchars($settings['smtp_host'] ?? '') . '" placeholder="smtp.example.com"></div>';
+            echo '<div class="form-group"><label>端口</label><input type="number" name="smtp_port" value="' . htmlspecialchars($settings['smtp_port'] ?? '587') . '"></div></div>';
+            echo '<div class="form-row"><div class="form-group"><label>发件邮箱</label><input type="email" name="smtp_user" value="' . htmlspecialchars($settings['smtp_user'] ?? '') . '" placeholder="user@example.com"></div>';
+            echo '<div class="form-group"><label>SMTP 密码 / 授权码</label><input type="password" name="smtp_pass" value="' . htmlspecialchars($settings['smtp_pass'] ?? '') . '" placeholder="留空不修改"></div></div>';
+            echo '<div class="form-group"><label>发件人地址</label><input type="email" name="smtp_from" value="' . htmlspecialchars($settings['smtp_from'] ?? '') . '" placeholder="默认使用 SMTP 邮箱"><p class="help-text" style="font-size:12px;color:var(--text-2)">接收通知的邮箱地址</p></div>';
+
+            echo '<div style="display:flex;align-items:center;gap:12px;margin-top:16px">';
+            echo '<button type="button" class="btn btn-secondary" id="test-mail-btn" onclick="testMail()">📧 发送测试邮件</button>';
+            echo '<span id="test-mail-result" style="font-size:13px"></span>';
+            echo '</div>';
+
+            echo '<script>
+                function testMail() {
+                    var btn = document.getElementById("test-mail-btn");
+                    var result = document.getElementById("test-mail-result");
+                    btn.disabled = true;
+                    btn.textContent = "发送中...";
+                    result.textContent = "";
+                    result.style.color = "";
+
+                    var form = btn.closest("form");
+                    var data = new FormData();
+                    data.append("_csrf_token", form.querySelector("[name=_csrf_token]").value);
+                    data.append("smtp_host", form.querySelector("[name=smtp_host]").value);
+                    data.append("smtp_port", form.querySelector("[name=smtp_port]").value);
+                    data.append("smtp_user", form.querySelector("[name=smtp_user]").value);
+                    data.append("smtp_pass", form.querySelector("[name=smtp_pass]").value);
+                    data.append("smtp_from", form.querySelector("[name=smtp_from]").value);
+
+                    fetch("' . $this->adminUrl('settings/test-mail') . '", {
+                        method: "POST",
+                        body: data,
+                        headers: {"X-Requested-With": "XMLHttpRequest"}
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) {
+                        result.textContent = d.message;
+                        result.style.color = d.success ? "#34c759" : "#ff3b30";
+                    })
+                    .catch(function(e) {
+                        result.textContent = "请求失败: " + e.message;
+                        result.style.color = "#ff3b30";
+                    })
+                    .finally(function() {
+                        btn.disabled = false;
+                        btn.textContent = "📧 发送测试邮件";
+                    });
+                }
+            </script>';
+        }
+
         echo '<button type="submit" class="btn btn-primary" style="margin-top:8px">保存设置</button>';
         echo '</form></div>';
 
@@ -97,14 +164,33 @@ class SettingController extends BaseAdminController
 
         $fields = [
             'site_name', 'site_description', 'site_keywords', 'timezone',
-            'log_level', 'cache_driver', 'registration', 'comment_moderation',
-            'comment_notification', 'footer_text',
-            'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_from',
+            'log_level', 'cache_driver', 'registration',
+            'footer_text',
         ];
+
+        // Only super_admin can change notification/SMTP settings
+        if (\LyBlog\Core\Auth::hasRole('super_admin')) {
+            $fields = array_merge($fields, [
+                'comment_moderation', 'comment_notification',
+                'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_from',
+            ]);
+
+            // Don't overwrite SMTP password with empty
+            $smtpPass = $request->getPost('smtp_pass', '');
+            if ($smtpPass === '') {
+                unset($_POST['smtp_pass']);
+            }
+        }
 
         $db = Database::getInstance();
         foreach ($fields as $field) {
             $value = $request->getPost($field, '');
+
+            // Skip empty SMTP password (keep existing)
+            if ($field === 'smtp_pass' && $value === '') {
+                continue;
+            }
+
             $existing = $db->fetch("SELECT id FROM {settings} WHERE `key` = ?", [$field]);
             if ($existing) {
                 $db->update('settings', ['value' => $value], '`key` = ?', [$field]);
@@ -117,6 +203,61 @@ class SettingController extends BaseAdminController
 
         Session::flash('success', '设置已保存');
         $this->redirect($this->adminUrl('settings'));
+    }
+
+    public function testMail(Request $request)
+    {
+        if (!Auth::hasRole('super_admin')) {
+            $this->json(['success' => false, 'message' => '权限不足'], 403);
+            return;
+        }
+
+        if (!Session::validateCsrf()) {
+            $this->json(['success' => false, 'message' => '安全令牌无效'], 403);
+            return;
+        }
+
+        $host = $request->getPost('smtp_host', '');
+        $port = $request->getPost('smtp_port', '587');
+        $user = $request->getPost('smtp_user', '');
+        $pass = $request->getPost('smtp_pass', '');
+        $from = $request->getPost('smtp_from', '');
+
+        // If password field is empty, use saved value
+        if (empty($pass)) {
+            $pass = Config::get('smtp_pass', '');
+        }
+
+        if (empty($host) || empty($user) || empty($pass)) {
+            $this->json(['success' => false, 'message' => 'SMTP 配置不完整，请填写主机、邮箱和密码'], 400);
+            return;
+        }
+
+        $to = $from ?: $user;
+
+        $mailer = new Mailer([
+            'smtp_host' => $host,
+            'smtp_port' => $port,
+            'smtp_user' => $user,
+            'smtp_pass' => $pass,
+            'smtp_from' => $from,
+        ]);
+
+        $siteName = Config::get('site_name', 'LyBlog');
+        $body = '<div style="font-family:sans-serif;padding:20px">';
+        $body .= '<h2 style="color:#1d1d1f">✅ SMTP 配置成功</h2>';
+        $body .= '<p>来自 <strong>' . htmlspecialchars($siteName) . '</strong> 的测试邮件。</p>';
+        $body .= '<p style="color:#6e6e73">如果你收到此邮件，说明 SMTP 配置正确无误。</p>';
+        $body .= '<p style="color:#6e6e73;font-size:12px">发送时间: ' . date('Y-m-d H:i:s') . '</p>';
+        $body .= '</div>';
+
+        $result = $mailer->send($to, "[{$siteName}] SMTP 测试邮件", $body);
+
+        if ($result) {
+            $this->json(['success' => true, 'message' => "测试邮件已发送至 {$to}，请检查收件箱"]);
+        } else {
+            $this->json(['success' => false, 'message' => '发送失败: ' . $mailer->getLastError()]);
+        }
     }
 
     public function clearCache(Request $request)

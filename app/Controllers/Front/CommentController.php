@@ -6,6 +6,9 @@ use LyBlog\Controllers\BaseController;
 use LyBlog\Core\Request;
 use LyBlog\Core\Session;
 use LyBlog\Core\Validator;
+use LyBlog\Core\Config;
+use LyBlog\Core\Mailer;
+use LyBlog\Models\Article;
 use LyBlog\Models\Comment;
 
 class CommentController extends BaseController
@@ -51,7 +54,18 @@ class CommentController extends BaseController
 
         Comment::createComment($data);
 
-        // Update article comment count if needed
+        // Send notification email if enabled
+        if (Config::get('comment_notification') == '1') {
+            try {
+                $article = Article::find($articleId);
+                if ($article) {
+                    Mailer::sendCommentNotification($data, $article);
+                }
+            } catch (\Throwable $e) {
+                // Silently ignore notification failures
+            }
+        }
+
         $redirectUrl = $this->siteUrl('article/' . $articleId) . '#comments';
         $this->redirect($redirectUrl);
     }

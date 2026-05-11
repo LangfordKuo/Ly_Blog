@@ -66,20 +66,8 @@ class Role extends Model
 
         $perms = static::decodePermissions($role['permissions'] ?? '');
 
-        if (isset($perms['*']) && $perms['*'] === true) {
-            return true;
-        }
-
-        $adminPerms = ['article.', 'page.', 'user.', 'setting.', 'theme.', 'plugin.', 'media.', 'category.', 'tag.', 'link.', 'backup.', 'dashboard'];
-        foreach ($adminPerms as $prefix) {
-            foreach ($perms as $key => $val) {
-                if ($val === true && strpos($key, $prefix) === 0) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        // Only roles with full wildcard * permission can access admin panel
+        return isset($perms['*']) && $perms['*'] === true;
     }
 
     public static function canAccessAdminById(int $roleId): bool
