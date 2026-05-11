@@ -5,6 +5,7 @@ namespace LyBlog\Controllers\Admin;
 use LyBlog\Core\Request;
 use LyBlog\Core\Session;
 use LyBlog\Core\Sanitizer;
+use LyBlog\Core\Config;
 
 class MediaController extends BaseAdminController
 {
@@ -12,7 +13,7 @@ class MediaController extends BaseAdminController
     {
         $page = (int) ($request->getQuery('page', 1));
         $perPage = 40;
-        $uploadDir = STORAGE_DIR . '/uploads';
+        $uploadDir = PUBLIC_DIR . '/uploads';
 
         $files = [];
         if (is_dir($uploadDir)) {
@@ -34,7 +35,7 @@ class MediaController extends BaseAdminController
                 $files[] = [
                     'name' => $f,
                     'size' => filesize($path),
-                    'url'  => Config('site_url') . '/storage/uploads/' . $f,
+                    'url'  => Config::get('site_url') . '/uploads/' . $f,
                     'time' => date('Y-m-d H:i', filemtime($path)),
                     'ext'  => strtolower(pathinfo($f, PATHINFO_EXTENSION)),
                 ];
@@ -88,11 +89,24 @@ class MediaController extends BaseAdminController
 
         echo '<script>
             function copyUrl(url) {
-                navigator.clipboard.writeText(url).then(function() {
-                    alert("URL 已复制: " + url);
-                }).catch(function() {
-                    prompt("复制此 URL:", url);
-                });
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(url).then(function() {
+                        alert("URL 已复制");
+                    }).catch(function() {
+                        fallbackCopy(url);
+                    });
+                } else {
+                    fallbackCopy(url);
+                }
+            }
+            function fallbackCopy(text) {
+                var ta = document.createElement("textarea");
+                ta.value = text;
+                ta.style.position = "fixed"; ta.style.opacity = "0";
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand("copy"); alert("URL 已复制"); } catch(e) { prompt("复制此 URL:", text); }
+                document.body.removeChild(ta);
             }
         </script>';
         $this->adminFooter();
@@ -128,7 +142,7 @@ class MediaController extends BaseAdminController
             return;
         }
 
-        $uploadDir = STORAGE_DIR . '/uploads';
+        $uploadDir = PUBLIC_DIR . '/uploads';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
         $filename = Sanitizer::filename(pathinfo($file['name'], PATHINFO_FILENAME)) . '.' . $ext;
@@ -159,10 +173,13 @@ class MediaController extends BaseAdminController
             return;
         }
 
-        $filepath = STORAGE_DIR . '/uploads/' . basename($filename);
+        $filepath = PUBLIC_DIR . '/uploads/' . basename($filename);
         if (file_exists($filepath)) {
-            unlink($filepath);
-            Session::flash('success', '文件已删除');
+            if (@unlink($filepath)) {
+                Session::flash('success', '文件已删除');
+            } else {
+                Session::flash('error', '删除失败，请检查文件权限');
+            }
         } else {
             Session::flash('error', '文件不存在');
         }

@@ -2,6 +2,7 @@
 /config/database.php
 /config/app.php
 /storage/
+/public/uploads/*
 .DS_Store
 Thumbs.db
 *.log

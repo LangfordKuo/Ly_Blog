@@ -11,7 +11,7 @@ class MediaController extends BaseUserController
 {
     public function index(Request $request)
     {
-        $uploadDir = STORAGE_DIR . '/uploads';
+        $uploadDir = PUBLIC_DIR . '/uploads';
         $files = [];
 
         if (is_dir($uploadDir)) {
@@ -28,7 +28,7 @@ class MediaController extends BaseUserController
                 $path = $uploadDir . '/' . $f;
                 $files[] = [
                     'name' => $f,
-                    'url'  => Config::get('site_url') . '/storage/uploads/' . $f,
+                    'url'  => Config::get('site_url') . '/uploads/' . $f,
                     'ext'  => strtolower(pathinfo($f, PATHINFO_EXTENSION)),
                 ];
             }
@@ -62,7 +62,7 @@ class MediaController extends BaseUserController
             echo '</div>';
         }
         echo '</div>';
-        echo '<script>function copyUrl(u){navigator.clipboard.writeText(u).then(function(){alert("已复制")}).catch(function(){prompt("复制:",u)})}</script>';
+        echo '<script>function copyUrl(u){if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(u).then(function(){alert("已复制")}).catch(function(){fallback(u)})}else{fallback(u)}}function fallback(t){var a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();try{document.execCommand("copy");alert("已复制")}catch(e){prompt("复制:",t)}document.body.removeChild(a)}</script>';
 
         $this->userFooter();
     }
@@ -96,7 +96,7 @@ class MediaController extends BaseUserController
             return;
         }
 
-        $uploadDir = STORAGE_DIR . '/uploads';
+        $uploadDir = PUBLIC_DIR . '/uploads';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
         $filename = Sanitizer::filename(pathinfo($file['name'], PATHINFO_FILENAME)) . '.' . $ext;

@@ -2,5 +2,67 @@
     "name": "Default",
     "version": "1.0.0",
     "author": "LyBlog",
-    "description": "默认主题 - Soft Minimalism + Glassmorphism 风格"
+    "description": "默认主题 - Soft Minimalism + Glassmorphism 风格",
+    "config": {
+        "primary_color": {
+            "type": "color",
+            "label": "主色调",
+            "default": "#1d1d1f",
+            "help": "影响按钮、链接、强调色"
+        },
+        "layout": {
+            "type": "select",
+            "label": "页面布局",
+            "default": "standard",
+            "options": {
+                "standard": "标准（居中）",
+                "sidebar-left": "侧栏在左",
+                "sidebar-right": "侧栏在右",
+                "no-sidebar": "无侧栏"
+            }
+        },
+        "dark_mode": {
+            "type": "select",
+            "label": "颜色模式",
+            "default": "light",
+            "options": {
+                "light": "明亮模式",
+                "dark": "暗黑模式",
+                "auto": "跟随系统"
+            }
+        },
+        "ajax_pagination": {
+            "type": "toggle",
+            "label": "AJAX 分页加载",
+            "default": "0",
+            "help": "启用后翻页时不刷新整个页面"
+        },
+        "ajax_comment": {
+            "type": "toggle",
+            "label": "AJAX 评论提交",
+            "default": "0",
+            "help": "启用后评论提交不刷新页面"
+        },
+        "show_cover": {
+            "type": "toggle",
+            "label": "显示文章封面",
+            "default": "1"
+        },
+        "card_style": {
+            "type": "select",
+            "label": "卡片样式",
+            "default": "glass",
+            "options": {
+                "glass": "毛玻璃",
+                "flat": "扁平",
+                "outlined": "边框"
+            }
+        },
+        "custom_css": {
+            "type": "textarea",
+            "label": "自定义 CSS",
+            "default": "",
+            "help": "会追加到页面 &lt;style&gt; 末尾"
+        }
+    }
 }

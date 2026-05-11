@@ -130,6 +130,8 @@ $router->group('/' . $adminPrefix, function (Router $router) {
     // Themes
     $router->get('/themes', 'Admin\ThemeController@index');
     $router->get('/themes/activate/{slug}', 'Admin\ThemeController@activate');
+    $router->get('/themes/settings/{slug}', 'Admin\ThemeController@settings');
+    $router->post('/themes/settings/{slug}/save', 'Admin\ThemeController@saveSettings');
 
     // Plugins
     $router->get('/plugins', 'Admin\PluginController@index');

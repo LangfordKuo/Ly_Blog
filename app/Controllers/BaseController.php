@@ -5,6 +5,7 @@ namespace LyBlog\Controllers;
 use LyBlog\Core\Config;
 use LyBlog\Core\Session;
 use LyBlog\Core\View;
+use LyBlog\Core\Theme;
 
 class BaseController
 {
@@ -23,6 +24,16 @@ class BaseController
         $this->view->addGlobal('footer_text', Config::get('footer_text', ''));
         $this->view->addGlobal('now_year', date('Y'));
         $this->view->addGlobal('is_logged_in', Session::isLoggedIn());
+
+        // Theme settings
+        $themeConfig = Theme::config();
+        $this->view->addGlobal('theme_css_vars', Theme::cssVars());
+        $this->view->addGlobal('theme_body_class', Theme::bodyClass());
+        $this->view->addGlobal('theme', $themeConfig);
+        $this->view->addGlobal('t_dark_mode', $themeConfig['dark_mode'] ?? 'light');
+        $this->view->addGlobal('t_card_style', $themeConfig['card_style'] ?? 'glass');
+        $this->view->addGlobal('t_show_cover', $themeConfig['show_cover'] ?? '1');
+        $this->view->addGlobal('t_primary_color', $themeConfig['primary_color'] ?? '');
     }
 
     protected function render(string $template, array $data = []): string
