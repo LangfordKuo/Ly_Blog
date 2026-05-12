@@ -343,6 +343,9 @@ function selected($val, $expected) {
     return $val == $expected ? 'selected' : '';
 }
 
+if (!is_dir($rootDir . '/storage')) {
+    @mkdir($rootDir . '/storage', 0755, true);
+}
 $envOk = PHP_VERSION_ID >= 70400 && extension_loaded('pdo') && extension_loaded('pdo_mysql') && extension_loaded('mbstring') && extension_loaded('json') && extension_loaded('fileinfo') && extension_loaded('gd');
 $dirsWritable = is_writable($rootDir . '/config') && is_writable($rootDir . '/storage');
 
